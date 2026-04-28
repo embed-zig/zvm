@@ -1,6 +1,6 @@
 # zvm — Zig 版本管理器
 
-[CI](https://github.com/embed-zig/zvm/actions/workflows/ci.yml)
+[![CI](https://github.com/embed-zig/zvm/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/embed-zig/zvm/actions/workflows/ci.yml)
 
 [English](README.md) | **中文**
 
