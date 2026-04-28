@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  ZIG_VERSION: 0.15.2
+
+jobs:
+  build-release-artifact:
+    name: Build, unit test, and package release artifact
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+
+      - name: Check shell scripts
+        shell: bash
+        run: sh -n install.sh devtools/*.sh test/integration/*.sh
+
+      - name: Verify registry
+        shell: bash
+        run: ./devtools/verify-registry.sh
+
+      - name: Run tests
+        run: zig build test
+
+      - name: Build release-like artifact
+        shell: bash
+        run: ./devtools/release.sh ci
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zvm-release
+          path: dist/ci/*
+          if-no-files-found: error
+
+  integration:
+    name: Integration on ${{ matrix.name }}
+    needs: build-release-artifact
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-amd64
+            os: ubuntu-latest
+            zvm_bin: zvm
+          - name: linux-aarch64
+            os: ubuntu-24.04-arm
+            zvm_bin: zvm
+          - name: macos-aarch64
+            os: macos-14
+            zvm_bin: zvm
+          - name: windows-amd64
+            os: windows-latest
+            zvm_bin: zvm.exe
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download release artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: zvm-release
+          path: release
+
+      - name: Run install.sh integration test
+        shell: bash
+        run: |
+          export ZVM_RELEASE_DIR="$PWD/release"
+          sh test/integration/install_sh_smoke.sh
+
+      - name: Run Homebrew integration test
+        if: matrix.name == 'macos-aarch64'
+        shell: bash
+        run: |
+          export ZVM_RELEASE_DIR="$PWD/release"
+          sh test/integration/homebrew_smoke.sh
