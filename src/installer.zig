@@ -70,7 +70,8 @@ pub fn installArtifact(allocator: std.mem.Allocator, version: []const u8, artifa
     defer allocator.free(tmp_root);
     const tmp_dir = try std.fs.path.join(allocator, &.{ tmp_root, version });
     defer allocator.free(tmp_dir);
-    const archive_path = try std.fs.path.join(allocator, &.{ tmp_dir, "archive" });
+    const archive_name = archiveFileName(artifact.url);
+    const archive_path = try std.fs.path.join(allocator, &.{ tmp_dir, archive_name });
     defer allocator.free(archive_path);
     const extract_dir = try std.fs.path.join(allocator, &.{ tmp_dir, "extract" });
     defer allocator.free(extract_dir);
@@ -88,7 +89,15 @@ pub fn installArtifact(allocator: std.mem.Allocator, version: []const u8, artifa
     defer allocator.free(actual);
     if (!std.mem.eql(u8, actual, artifact.sha256)) return error.ChecksumMismatch;
 
-    try run(allocator, &.{ "tar", "-xf", archive_path, "-C", extract_dir });
+    if (@import("builtin").os.tag == .windows) {
+        const tar_archive_path = try windowsTarPath(allocator, archive_path);
+        defer allocator.free(tar_archive_path);
+        const tar_extract_dir = try windowsTarPath(allocator, extract_dir);
+        defer allocator.free(tar_extract_dir);
+        try run(allocator, &.{ "tar", "--force-local", "-xf", tar_archive_path, "-C", tar_extract_dir });
+    } else {
+        try run(allocator, &.{ "tar", "-xf", archive_path, "-C", extract_dir });
+    }
 
     const zig_source = try findZigExecutable(allocator, extract_dir);
     defer allocator.free(zig_source);
@@ -228,6 +237,24 @@ fn materializeArchive(allocator: std.mem.Allocator, url: []const u8, output_path
     try std.fs.cwd().copyFile(url, std.fs.cwd(), output_path, .{});
 }
 
+fn archiveFileName(url: []const u8) []const u8 {
+    const without_query = if (std.mem.indexOfScalar(u8, url, '?')) |index| url[0..index] else url;
+    var start: usize = 0;
+    for (without_query, 0..) |char, index| {
+        if (char == '/' or char == '\\') start = index + 1;
+    }
+    const base = without_query[start..];
+    return if (base.len == 0) "archive" else base;
+}
+
+fn windowsTarPath(allocator: std.mem.Allocator, path: []const u8) ![]const u8 {
+    const copy = try allocator.dupe(u8, path);
+    for (copy) |*char| {
+        if (char.* == '\\') char.* = '/';
+    }
+    return copy;
+}
+
 fn sha256File(allocator: std.mem.Allocator, file_path: []const u8) ![]const u8 {
     const contents = try std.fs.cwd().readFileAlloc(allocator, file_path, 512 * 1024 * 1024);
     defer allocator.free(contents);
@@ -274,5 +301,10 @@ fn run(allocator: std.mem.Allocator, argv: []const []const u8) !void {
         else => {},
     }
 
+    std.debug.print("command failed:", .{});
+    for (argv) |arg| std.debug.print(" {s}", .{arg});
+    std.debug.print("\n", .{});
+    if (result.stderr.len > 0) std.debug.print("{s}\n", .{result.stderr});
+    if (result.stdout.len > 0) std.debug.print("{s}\n", .{result.stdout});
     return error.CommandFailed;
 }
