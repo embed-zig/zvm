@@ -11,6 +11,7 @@ Examples:
 ```text
 registry/0.15.2.zon
 registry/0.15.2-esp.r4.zon
+registry/0.16.0-esp.r1.zon
 registry/0.16.0.zon
 registry/0.17.0-dev.135+9df02121d.zon
 ```
@@ -25,6 +26,7 @@ ESP bootstrap builds use legal SemVer prerelease names such as:
 
 ```text
 0.15.2-esp.r4
+0.16.0-esp.r1
 ```
 
 zvm supports simple pattern expressions such as:
@@ -38,7 +40,7 @@ Patterns are zvm-specific matchers, not registry aliases. They resolve to the hi
 
 ## Supported Host Targets
 
-Each registry entry must include these host targets:
+Official Zig registry entries must include these host targets:
 
 ```text
 macos-x86_64
@@ -48,6 +50,8 @@ linux-aarch64
 windows-x86_64
 windows-aarch64
 ```
+
+ESP registry entries may include only the targets published by the upstream `embed-zig/esp-zig-bootstrap` release, but they must include at least one supported target.
 
 ## Schema
 

@@ -6,11 +6,12 @@ test "registry loads flat version files and resolves patterns" {
     const reg = try registry.load(allocator, "test/fixtures/registry");
     defer reg.deinit();
 
-    try std.testing.expectEqual(@as(usize, 4), reg.entries.len);
+    try std.testing.expectEqual(@as(usize, 5), reg.entries.len);
     try std.testing.expectEqualStrings("0.15.2-esp.r4", reg.entries[0].version);
     try std.testing.expectEqualStrings("0.15.2", reg.entries[1].version);
-    try std.testing.expectEqualStrings("0.16.0", reg.entries[2].version);
-    try std.testing.expectEqualStrings("0.17.0-dev.135+9df02121d", reg.entries[3].version);
+    try std.testing.expectEqualStrings("0.16.0-esp.r1", reg.entries[2].version);
+    try std.testing.expectEqualStrings("0.16.0", reg.entries[3].version);
+    try std.testing.expectEqualStrings("0.17.0-dev.135+9df02121d", reg.entries[4].version);
 
     const esp = (try reg.resolve("0.15.2-esp.*")).?;
     try std.testing.expectEqualStrings("0.15.2-esp.r4", esp.version);
@@ -18,11 +19,14 @@ test "registry loads flat version files and resolves patterns" {
     const official = (try reg.resolve("0.16.*")).?;
     try std.testing.expectEqualStrings("0.16.0", official.version);
 
+    const esp_016 = (try reg.resolve("0.16.0-esp.*")).?;
+    try std.testing.expectEqualStrings("0.16.0-esp.r1", esp_016.version);
+
     const dev = (try reg.resolve("0.17.*")).?;
     try std.testing.expectEqualStrings("0.17.0-dev.135+9df02121d", dev.version);
 }
 
-test "release registry entries include supported host targets" {
+test "release registry entries include expected host targets" {
     const allocator = std.testing.allocator;
     const reg = try registry.load(allocator, "registry");
     defer reg.deinit();
@@ -37,10 +41,16 @@ test "release registry entries include supported host targets" {
     };
 
     for (reg.entries) |entry| {
+        var found_targets: usize = 0;
         for (targets) |target| {
             const url = try registry.readArtifactUrl(allocator, entry, target);
-            try std.testing.expect(url != null);
-            allocator.free(url.?);
+            if (url) |found_url| {
+                found_targets += 1;
+                allocator.free(found_url);
+            } else if (std.mem.indexOf(u8, entry.version, "-esp") == null) {
+                return error.MissingOfficialTarget;
+            }
         }
+        try std.testing.expect(found_targets > 0);
     }
 }

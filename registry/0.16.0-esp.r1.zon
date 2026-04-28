@@ -1,0 +1,19 @@
+.{
+    .version = "0.16.0-esp.r1",
+    .channel = "esp",
+    .date = "2026-04-28",
+    .upstream = .{
+        .kind = "github_release",
+        .repo = "embed-zig/esp-zig-bootstrap",
+        .tag = "v0.16.0-r1",
+    },
+    .notes = "ESP Zig bootstrap 0.16.0 r1 local macOS aarch64 baseline release.",
+    .platforms = .{
+        .{
+            .target = "macos-aarch64",
+            .url = "https://github.com/embed-zig/esp-zig-bootstrap/releases/download/v0.16.0-r1/zig-0.16.0-r1-aarch64-macos-none-baseline.tar.xz",
+            .sha256 = "d4cb15f95b17a6c4aab1bcda2800ba52766c1484a11beecbd31a43191484e2dc",
+            .size = 56025348,
+        },
+    },
+}

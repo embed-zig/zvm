@@ -70,13 +70,14 @@ Registry 是扁平目录：
 ```text
 registry/0.15.2.zon
 registry/0.15.2-esp.r4.zon
+registry/0.16.0-esp.r1.zon
 registry/0.16.0.zon
 registry/0.17.0-dev.135+9df02121d.zon
 ```
 
 仓库内置的 registry 条目使用真实上游 URL、size 和 SHA-256 checksum，来源是 Zig download index 和 `embed-zig/esp-zig-bootstrap` GitHub Releases。
 
-每个 registry 条目都包含 `macos-x86_64`、`macos-aarch64`、`linux-x86_64`、`linux-aarch64`、`windows-x86_64` 和 `windows-aarch64`。
+官方 Zig registry 条目包含 `macos-x86_64`、`macos-aarch64`、`linux-x86_64`、`linux-aarch64`、`windows-x86_64` 和 `windows-aarch64`。ESP registry 条目按 upstream release 实际发布的 artifact 覆盖平台。
 
 ### 开发
 
@@ -154,13 +155,14 @@ Registry files are flat:
 ```text
 registry/0.15.2.zon
 registry/0.15.2-esp.r4.zon
+registry/0.16.0-esp.r1.zon
 registry/0.16.0.zon
 registry/0.17.0-dev.135+9df02121d.zon
 ```
 
 The checked-in registry entries use real upstream URLs, sizes, and SHA-256 checksums from the Zig download index and `embed-zig/esp-zig-bootstrap` GitHub Releases.
 
-Each registry entry includes `macos-x86_64`, `macos-aarch64`, `linux-x86_64`, `linux-aarch64`, `windows-x86_64`, and `windows-aarch64`.
+Official Zig registry entries include `macos-x86_64`, `macos-aarch64`, `linux-x86_64`, `linux-aarch64`, `windows-x86_64`, and `windows-aarch64`. ESP registry entries cover the platforms published by the upstream release artifacts.
 
 ### Development
 

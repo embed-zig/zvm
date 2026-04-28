@@ -44,8 +44,9 @@ for file in "$registry_dir"/*.zon; do
         failed=1
     fi
 
+    found_targets=0
     for target in $required_targets; do
-        if ! awk -v target="$target" '
+        if awk -v target="$target" '
             $1 == ".target" && $2 == "=" {
                 value = $3
                 gsub(/[",]/, "", value)
@@ -53,10 +54,17 @@ for file in "$registry_dir"/*.zon; do
             }
             END { exit(found ? 0 : 1) }
         ' "$file"; then
+            found_targets=$((found_targets + 1))
+        elif [ "${name#*-esp}" = "$name" ]; then
             echo "$file: missing required target $target" >&2
             failed=1
         fi
     done
+
+    if [ "$found_targets" -eq 0 ]; then
+        echo "$file: must include at least one supported target" >&2
+        failed=1
+    fi
 done
 
 exit "$failed"

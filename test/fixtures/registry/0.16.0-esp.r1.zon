@@ -1,0 +1,5 @@
+.{
+    .version = "0.16.0-esp.r1",
+    .channel = "esp",
+    .platforms = .{},
+}
