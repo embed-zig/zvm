@@ -5,7 +5,7 @@ zvm 以预编译二进制形式分发，不需要现有的 Zig 安装。
 ## 一行命令安装
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/embed-zig/zvm/main/install.sh | sh
+curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | sh
 ```
 
 安装脚本的工作流程：
@@ -14,6 +14,7 @@ curl -fsSL https://raw.githubusercontent.com/embed-zig/zvm/main/install.sh | sh
 2. 从 GitHub Releases 下载 `zvm-<os>-<arch>.tar.gz`
 3. 根据 `SHA256SUMS` 校验 SHA-256 校验和
 4. 解压到 `~/.zvm/bin/zvm`
+5. 尽可能将 `~/.zvm/bin` 写入已经存在的 shell 启动文件
 
 ## 环境变量
 
@@ -24,12 +25,19 @@ curl -fsSL https://raw.githubusercontent.com/embed-zig/zvm/main/install.sh | sh
 | `ZVM_INSTALL_DIR`  | 安装根目录                 | `$HOME/.zvm`    |
 | `ZVM_REPO`         | GitHub 仓库             | `embed-zig/zvm` |
 | `ZVM_ARTIFACT_DIR` | 本地 artifact 目录（用于 CI） | —               |
+| `ZVM_NO_MODIFY_PATH` | 设置为 `1` 时跳过已有 shell 启动文件更新 | — |
 
 
 使用自定义目录的示例：
 
 ```sh
-ZVM_INSTALL_DIR=/usr/local/zvm curl -fsSL ... | sh
+curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | ZVM_INSTALL_DIR=/usr/local/zvm sh
+```
+
+如需安装指定 release，下载该 release 的 `install.sh`：
+
+```sh
+curl -fsSL https://github.com/embed-zig/zvm/releases/download/v0.1.0/install.sh | sh
 ```
 
 ## Homebrew
@@ -48,7 +56,7 @@ brew upgrade zvm
 在 Windows 上，通过 Git Bash 或 WSL 安装：
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/embed-zig/zvm/main/install.sh | sh
+curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | sh
 ```
 
 或手动安装：
@@ -62,6 +70,7 @@ curl -fsSL https://raw.githubusercontent.com/embed-zig/zvm/main/install.sh | sh
 安装完成后：
 
 ```sh
+export PATH="$HOME/.zvm/bin:$PATH"  # 或重启 shell
 zvm --version    # 应输出版本号
 zvm env          # 打印 PATH 导出命令
 zvm doctor       # 完整健康检查

@@ -9,7 +9,7 @@ zvm is distributed as prebuilt release binaries. Users do not need Zig installed
 Preferred installer:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/embed-zig/zvm/main/install.sh | sh
+curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | sh
 ```
 
 Useful environment variables:

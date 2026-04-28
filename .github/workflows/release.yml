@@ -60,6 +60,44 @@ jobs:
         with:
           tag_name: ${{ steps.release.outputs.tag }}
           name: ${{ steps.release.outputs.tag }}
+          body: |
+            ## Install
+
+            Install this release with the bootstrap script:
+
+            ```sh
+            curl -fsSL https://github.com/embed-zig/zvm/releases/download/${{ steps.release.outputs.tag }}/install.sh | sh
+            ```
+
+            The installer adds zvm to existing shell startup files when possible.
+
+            Restart your shell, or run this for the current shell session:
+
+            ```sh
+            export PATH="$HOME/.zvm/bin:$PATH"
+            ```
+
+            Verify the installation:
+
+            ```sh
+            zvm --version
+            zvm doctor
+            ```
+
+            ## Manual Install
+
+            Download the archive for your platform, verify it with `SHA256SUMS`, and place the `zvm` binary in `~/.zvm/bin`.
+
+            Supported release assets:
+
+            - `zvm-linux-x86_64.tar.gz`
+            - `zvm-linux-aarch64.tar.gz`
+            - `zvm-macos-x86_64.tar.gz`
+            - `zvm-macos-aarch64.tar.gz`
+            - `zvm-windows-x86_64.tar.gz`
+            - `zvm-windows-aarch64.tar.gz`
+
+            The bootstrap script verifies checksums automatically.
           files: |
             dist/${{ steps.release.outputs.tag }}/zvm-*
             dist/${{ steps.release.outputs.tag }}/install.sh

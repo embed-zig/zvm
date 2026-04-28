@@ -6,6 +6,10 @@ version="${ZVM_VERSION:-latest}"
 install_dir="${ZVM_INSTALL_DIR:-$HOME/.zvm}"
 artifact_dir="${ZVM_ARTIFACT_DIR:-}"
 bin_dir="$install_dir/bin"
+modify_path=1
+if [ "${ZVM_NO_MODIFY_PATH:-}" = "1" ]; then
+    modify_path=0
+fi
 
 need() {
     command -v "$1" >/dev/null 2>&1 || {
@@ -54,6 +58,96 @@ sha256_file() {
     else
         echo "zvm installer: missing sha256sum or shasum" >&2
         exit 1
+    fi
+}
+
+shell_available() {
+    shell_name="$1"
+    if command -v "$shell_name" >/dev/null 2>&1; then
+        return 0
+    fi
+
+    if [ -f /etc/shells ]; then
+        awk -v shell_name="/$shell_name" '
+            $0 ~ shell_name "$" { found = 1 }
+            END { exit(found ? 0 : 1) }
+        ' /etc/shells
+        return $?
+    fi
+
+    return 1
+}
+
+append_path_once() {
+    file="$1"
+    line="$2"
+
+    if [ ! -f "$file" ]; then
+        return 1
+    fi
+
+    if [ -f "$file" ] && awk -v bin_dir="$bin_dir" 'index($0, bin_dir) { found = 1 } END { exit(found ? 0 : 1) }' "$file"; then
+        return 1
+    fi
+
+    {
+        echo
+        echo "# zvm"
+        echo "$line"
+    } >> "$file"
+    return 0
+}
+
+configure_path() {
+    configured=""
+    posix_line="export PATH=\"$bin_dir:\$PATH\""
+
+    if shell_available zsh; then
+        for file in "$HOME/.zshrc" "$HOME/.zprofile"; do
+            if append_path_once "$file" "$posix_line"; then
+                configured="$configured $file"
+            fi
+        done
+    fi
+
+    if shell_available bash; then
+        for file in "$HOME/.bashrc" "$HOME/.bash_profile"; do
+            if append_path_once "$file" "$posix_line"; then
+                configured="$configured $file"
+            fi
+        done
+    fi
+
+    if shell_available sh; then
+        if append_path_once "$HOME/.profile" "$posix_line"; then
+            configured="$configured $HOME/.profile"
+        fi
+    fi
+
+    if shell_available fish; then
+        fish_dir="$HOME/.config/fish"
+        fish_file="$fish_dir/config.fish"
+        fish_line="if not contains \"$bin_dir\" \$PATH; set -gx PATH \"$bin_dir\" \$PATH; end"
+        if append_path_once "$fish_file" "$fish_line"; then
+            configured="$configured $fish_file"
+        fi
+    fi
+
+    if [ -n "$configured" ]; then
+        echo
+        echo "Added zvm to PATH in:$configured"
+        echo "Restart your shell or run:"
+        echo "  export PATH=\"$bin_dir:\$PATH\""
+    else
+        case ":$PATH:" in
+            *":$bin_dir:"*) ;;
+            *)
+                echo
+                echo "No existing shell startup file was updated."
+                echo "Restart your shell or run:"
+                echo "  export PATH=\"$bin_dir:\$PATH\""
+                ;;
+        esac
     fi
 }
 
@@ -107,11 +201,15 @@ cp "$tmp/extract/$exe" "$bin_dir/$exe"
 chmod 0755 "$bin_dir/$exe" 2>/dev/null || true
 
 echo "Installed zvm to $bin_dir/$exe"
-case ":$PATH:" in
-    *":$bin_dir:"*) ;;
-    *)
-        echo
-        echo "Add zvm to PATH:"
-        echo "  export PATH=\"$bin_dir:\$PATH\""
-        ;;
-esac
+if [ "$modify_path" = "1" ]; then
+    configure_path
+else
+    case ":$PATH:" in
+        *":$bin_dir:"*) ;;
+        *)
+            echo
+            echo "Add zvm to PATH:"
+            echo "  export PATH=\"$bin_dir:\$PATH\""
+            ;;
+    esac
+fi

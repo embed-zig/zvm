@@ -1,8 +1,10 @@
 # Shell Integration
 
-zvm requires minimal shell setup. Just add `~/.zvm/bin` to PATH.
+zvm requires minimal shell setup. The installer updates existing shell startup files automatically when it finds them. Restart your shell after installation, or run the export line printed by the installer.
 
 ## Quick Setup
+
+Manual setup is only needed if you installed with `ZVM_NO_MODIFY_PATH=1` or want to customize your shell files.
 
 ### Bash
 

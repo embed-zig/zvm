@@ -85,5 +85,7 @@ EOF
 brew install "$tap_name/zvm-integration"
 brew test "$tap_name/zvm-integration"
 
-zvm_bin="$(brew --prefix "$tap_name/zvm-integration")/bin/zvm"
-ZVM_BIN="$zvm_bin" sh "$script_dir/zvm_commands_smoke.sh"
+zvm_prefix="$(brew --prefix "$tap_name/zvm-integration")"
+PATH="$zvm_prefix/bin:$PATH" \
+ZVM_COMMANDS_HOME="$work/zvm-home" \
+sh "$script_dir/zvm_commands_smoke.sh"

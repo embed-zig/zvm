@@ -5,7 +5,7 @@ zvm is distributed as prebuilt binaries. No existing Zig installation required.
 ## One-Line Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/embed-zig/zvm/main/install.sh | sh
+curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | sh
 ```
 
 The installer:
@@ -14,6 +14,7 @@ The installer:
 2. Downloads `zvm-<os>-<arch>.tar.gz` from GitHub Releases
 3. Verifies SHA-256 checksum against `SHA256SUMS`
 4. Extracts to `~/.zvm/bin/zvm`
+5. Adds `~/.zvm/bin` to existing shell startup files when possible
 
 ## Environment Variables
 
@@ -24,12 +25,19 @@ The installer:
 | `ZVM_INSTALL_DIR`  | Installation root                 | `$HOME/.zvm`    |
 | `ZVM_REPO`         | GitHub repository                 | `embed-zig/zvm` |
 | `ZVM_ARTIFACT_DIR` | Local artifact directory (for CI) | —               |
+| `ZVM_NO_MODIFY_PATH` | Skip existing shell startup file updates when set to `1` | — |
 
 
 Example with custom directory:
 
 ```sh
-ZVM_INSTALL_DIR=/usr/local/zvm curl -fsSL ... | sh
+curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | ZVM_INSTALL_DIR=/usr/local/zvm sh
+```
+
+To install a specific release, download that release's `install.sh`:
+
+```sh
+curl -fsSL https://github.com/embed-zig/zvm/releases/download/v0.1.0/install.sh | sh
 ```
 
 ## Homebrew
@@ -48,7 +56,7 @@ brew upgrade zvm
 On Windows, install via Git Bash or WSL:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/embed-zig/zvm/main/install.sh | sh
+curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | sh
 ```
 
 Or manually:
@@ -62,6 +70,7 @@ Or manually:
 After installation:
 
 ```sh
+export PATH="$HOME/.zvm/bin:$PATH"  # or restart your shell
 zvm --version    # Should print version
 zvm env          # Prints PATH export line
 zvm doctor       # Full health check

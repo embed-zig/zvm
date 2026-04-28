@@ -49,7 +49,14 @@ for target in $targets; do
     tar -C "$build_dir/$target" -czf "$dist/zvm-$os-$arch.tar.gz" "$exe_name"
 done
 
-cp install.sh "$dist/install.sh"
+awk -v release_version="$version" '
+    $0 == "version=\"${ZVM_VERSION:-latest}\"" {
+        print "version=\"${ZVM_VERSION:-" release_version "}\""
+        next
+    }
+    { print }
+' install.sh > "$dist/install.sh"
+chmod +x "$dist/install.sh"
 rm -rf "$build_dir"
 
 (

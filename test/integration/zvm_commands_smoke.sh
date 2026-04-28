@@ -1,9 +1,8 @@
 #!/bin/sh
 set -eu
 
-zvm_bin="${ZVM_BIN:-}"
 work="${ZVM_TEST_TMPDIR:-${TMPDIR:-/tmp}/zvm-integration.$$}"
-zvm_home="$work/home"
+zvm_home="${ZVM_COMMANDS_HOME:-}"
 registry_dir="$work/registry"
 archive_dir="$work/archives"
 
@@ -108,40 +107,63 @@ assert_eq() {
 
 mkdir -p "$registry_dir" "$archive_dir"
 target="$(target_tag)"
-zvm_home_arg="$(zvm_path "$zvm_home")"
 registry_dir_arg="$(zvm_path "$registry_dir")"
 
-if [ -z "$zvm_bin" ]; then
-    if command -v zvm >/dev/null 2>&1; then
-        zvm_bin="zvm"
-    elif command -v zvm.exe >/dev/null 2>&1; then
-        zvm_bin="zvm.exe"
-    else
-        echo "zvm is not on PATH and ZVM_BIN is not set" >&2
-        exit 1
-    fi
+if command -v zvm >/dev/null 2>&1; then
+    zvm_cmd="zvm"
+elif command -v zvm.exe >/dev/null 2>&1; then
+    zvm_cmd="zvm.exe"
+else
+    echo "zvm is not on PATH" >&2
+    exit 1
+fi
+
+if [ -n "$zvm_home" ]; then
+    zvm_home_arg="$(zvm_path "$zvm_home")"
+else
+    zvm_home_arg=""
 fi
 
 make_archive "0.15.2" "$target"
 make_archive "0.15.2-esp.r4" "$target"
 
-"$zvm_bin" --version
-ZVM_REGISTRY_DIR="$registry_dir_arg" "$zvm_bin" list-remote
+run_zvm() {
+    if [ -n "$zvm_home_arg" ]; then
+        ZVM_HOME="$zvm_home_arg" "$zvm_cmd" "$@"
+    else
+        "$zvm_cmd" "$@"
+    fi
+}
 
-ZVM_HOME="$zvm_home_arg" ZVM_REGISTRY_DIR="$registry_dir_arg" "$zvm_bin" install 0.15.2
-ZVM_HOME="$zvm_home_arg" ZVM_REGISTRY_DIR="$registry_dir_arg" "$zvm_bin" install '0.15.2-esp.*'
+run_zvm_with_registry() {
+    if [ -n "$zvm_home_arg" ]; then
+        ZVM_HOME="$zvm_home_arg" ZVM_REGISTRY_DIR="$registry_dir_arg" "$zvm_cmd" "$@"
+    else
+        ZVM_REGISTRY_DIR="$registry_dir_arg" "$zvm_cmd" "$@"
+    fi
+}
 
-ZVM_HOME="$zvm_home_arg" "$zvm_bin" use 0.15.2
-assert_eq "$(ZVM_HOME="$zvm_home_arg" "$zvm_bin" current)" "0.15.2" "current after use 0.15.2"
+run_zvm --version
+ZVM_REGISTRY_DIR="$registry_dir_arg" "$zvm_cmd" list-remote
 
-ZVM_HOME="$zvm_home_arg" "$zvm_bin" use '0.15.2-esp.*'
-assert_eq "$(ZVM_HOME="$zvm_home_arg" "$zvm_bin" current)" "0.15.2-esp.r4" "current after use 0.15.2-esp.*"
+run_zvm_with_registry install 0.15.2
+run_zvm_with_registry install '0.15.2-esp.*'
+
+run_zvm use 0.15.2
+assert_eq "$(run_zvm current)" "0.15.2" "current after use 0.15.2"
+
+run_zvm use '0.15.2-esp.*'
+assert_eq "$(run_zvm current)" "0.15.2-esp.r4" "current after use 0.15.2-esp.*"
 
 case "$(uname -s)" in
     MINGW*|MSYS*|CYGWIN*) ;;
     *)
-        assert_eq "$(PATH="$zvm_home/bin:$PATH" zig)" "0.15.2-esp.r4" "zig through zvm bin"
+        if [ -n "$zvm_home_arg" ]; then
+            assert_eq "$(PATH="$zvm_home/bin:$PATH" zig)" "0.15.2-esp.r4" "zig through zvm bin"
+        else
+            assert_eq "$(zig)" "0.15.2-esp.r4" "zig through configured PATH"
+        fi
         ;;
 esac
 
-ZVM_HOME="$zvm_home_arg" "$zvm_bin" doctor
+run_zvm doctor

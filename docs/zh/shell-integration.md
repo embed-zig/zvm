@@ -1,8 +1,10 @@
 # Shell 集成
 
-zvm 只需要最少的 shell 设置。只需将 `~/.zvm/bin` 加入 PATH。
+zvm 只需要最少的 shell 设置。安装脚本会在找到已有 shell 启动文件时自动更新它们。安装后重启 shell，或执行安装脚本打印的 export 命令。
 
 ## 快速设置
+
+只有在使用 `ZVM_NO_MODIFY_PATH=1` 安装，或想自定义 shell 文件时，才需要手动设置。
 
 ### Bash
 

@@ -12,7 +12,7 @@
 
 ```sh
 # 安装 zvm
-curl -fsSL https://raw.githubusercontent.com/embed-zig/zvm/main/install.sh | sh
+curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | sh
 
 # 加入 PATH
 export PATH="$HOME/.zvm/bin:$PATH"

@@ -15,8 +15,8 @@ pub fn updateMessage(allocator: std.mem.Allocator, current_version: []const u8) 
     }
 
     return std.fmt.allocPrint(allocator,
-        \\zvm {s} can be updated with the project installer once release artifacts exist:
-        \\  curl -fsSL https://raw.githubusercontent.com/embed-zig/zvm/main/install.sh | sh
+        \\zvm {s} can be updated with the latest release installer:
+        \\  curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | sh
         \\
     , .{current_version});
 }

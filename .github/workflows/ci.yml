@@ -54,16 +54,12 @@ jobs:
         include:
           - name: linux-amd64
             os: ubuntu-latest
-            zvm_bin: zvm
           - name: linux-aarch64
             os: ubuntu-24.04-arm
-            zvm_bin: zvm
           - name: macos-aarch64
             os: macos-14
-            zvm_bin: zvm
           - name: windows-amd64
             os: windows-latest
-            zvm_bin: zvm.exe
     steps:
       - name: Checkout
         uses: actions/checkout@v4
