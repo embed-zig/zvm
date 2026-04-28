@@ -1,176 +1,103 @@
-# zvm
+# zvm — Zig Version Manager
 
-Zig Version Manager for official Zig releases and `embed-zig/esp-zig-bootstrap` builds.
+[CI](https://github.com/embed-zig/zvm/actions/workflows/ci.yml)
 
-- [中文](#中文)
-- [English](#english)
+**English** | [中文](README.zh.md)
 
-## 中文
+> Manage Zig toolchains with a single symlink. No shims, no shell hooks, no dependencies.
 
-`zvm` 是一个 Zig 版本管理器。`zvm` 本体用 Zig 编写，但会以预编译 binary 的形式发布，所以用户安装 `zvm` 时不需要先安装 Zig。
+`zvm` installs and switches between official Zig releases and ESP Zig bootstrap builds. It's written in Zig but distributed as prebuilt binaries—installing zvm itself does not require Zig.
 
-当前仓库包含项目骨架、扁平 registry、安装布局和可构建的 CLI skeleton。Zig toolchain 的网络下载和解压逻辑还没有完整实现，但命令已经能解析 registry 版本并验证本地目录布局。
-
-### 安装 zvm
+## Quick Start
 
 ```sh
+# Install zvm
 curl -fsSL https://raw.githubusercontent.com/embed-zig/zvm/main/install.sh | sh
+
+# Add to PATH
+export PATH="$HOME/.zvm/bin:$PATH"
+
+# Install and use Zig
+zvm install 0.15.2
+zvm use 0.15.2
+zig version
 ```
 
-`install.sh` 会检测系统和 CPU 架构，从 GitHub Releases 下载匹配的 `zvm-<os>-<arch>.tar.gz`，用 `SHA256SUMS` 校验后安装到：
+## Features
+
+- **Single symlink design** — No shims directory, just one `~/.zvm/bin/zig` symlink
+- **Pattern matching** — Install latest matching version with `zvm install '0.15.2-esp.*'`
+- **ESP bootstrap support** — First-class support for `embed-zig/esp-zig-bootstrap` releases
+- **Cross-platform** — Tested on Linux (x86_64, aarch64), macOS (Intel, Apple Silicon), and Windows
+- **Self-contained** — Prebuilt binaries, no runtime dependencies
+
+## Available Commands
+
+```sh
+zvm list-remote              # List all available versions
+zvm list-remote '0.15.*'   # Filter with pattern
+zvm install 0.15.2         # Install a specific version
+zvm install '0.15.2-esp.*' # Install latest ESP build
+zvm use 0.15.2             # Switch active version
+zvm current                # Show active version
+zvm env                    # Print PATH export
+zvm doctor                 # Check installation health
+```
+
+## How It Works
 
 ```text
-~/.zvm/bin/zvm
+~/.zvm/
+├── bin/
+│   ├── zvm              # The version manager
+│   └── zig -> ../versions/0.15.2/zig
+└── versions/
+    ├── 0.15.2/
+    │   └── zig
+    └── 0.15.2-esp.r4/
+        └── zig
 ```
 
-把 `zvm` 加入 PATH：
+`zvm use <version>` atomically updates the `~/.zvm/bin/zig` symlink. No shell integration needed beyond PATH.
+
+## Version Patterns
+
+zvm supports SemVer-based pattern matching:
+
+
+| Pattern        | Resolves to                 |
+| -------------- | --------------------------- |
+| `0.15.2`       | Exact version               |
+| `0.15.2-esp.*` | Latest ESP build for 0.15.2 |
+| `0.16.*`       | Latest 0.16.x release       |
+
+
+Official releases use canonical SemVer (`0.15.2`). ESP builds use pre-release identifiers (`0.15.2-esp.r4`).
+
+## Documentation
+
+- [Installation](docs/en/installation.md) — Detailed install options
+- [Shell Setup](docs/en/shell-integration.md) — PATH configuration
+- [Directory Layout](docs/en/install-layout.md) — How files are organized
+- [Registry Format](docs/en/registry-format.md) — Adding new versions
+- [Agent Skill](docs/en/agent-skill.md) — For Cursor/windsurf agents
+
+## Updating zvm
 
 ```sh
-export PATH="$HOME/.zvm/bin:$PATH"
-```
+# curl install
+zvm self-update
 
-如果通过 Homebrew 安装，更新时使用：
-
-```sh
+# Homebrew
 brew upgrade zvm
 ```
 
-### 管理 Zig
+## Development
 
 ```sh
-zvm list-remote
-zvm list-remote '0.15.2-esp.*'
-zvm install 0.15.2
-zvm use 0.15.2
-zvm current
-zvm env
-zvm doctor
-```
-
-`zvm` 只使用一个 PATH 目录：
-
-```text
-~/.zvm/bin/zvm
-~/.zvm/bin/zig -> ../versions/0.15.2-esp.r4/zig
-~/.zvm/versions/0.15.2-esp.r4/
-```
-
-没有单独的 `shims` 目录。`zvm use <version>` 只更新 `~/.zvm/bin/zig` 这个 symlink。
-
-### 版本命名
-
-官方 Zig 使用标准 SemVer，例如 `0.15.2`。ESP bootstrap 使用合法的 SemVer pre-release 名称，例如 `0.15.2-esp.r4`。
-
-`zvm` 支持简单的匹配表达式，例如 `0.15.2-esp.*`，并选择 SemVer 优先级最高的匹配版本。
-
-### Registry
-
-Registry 是扁平目录：
-
-```text
-registry/0.15.2.zon
-registry/0.15.2-esp.r4.zon
-registry/0.16.0-esp.r1.zon
-registry/0.16.0.zon
-registry/0.17.0-dev.135+9df02121d.zon
-```
-
-仓库内置的 registry 条目使用真实上游 URL、size 和 SHA-256 checksum，来源是 Zig download index 和 `embed-zig/esp-zig-bootstrap` GitHub Releases。
-
-官方 Zig registry 条目包含 `macos-x86_64`、`macos-aarch64`、`linux-x86_64`、`linux-aarch64`、`windows-x86_64` 和 `windows-aarch64`。ESP registry 条目按 upstream release 实际发布的 artifact 覆盖平台。
-
-### 开发
-
-```sh
-zig build
-zig build test
-sh -n install.sh devtools/*.sh
+zig build              # Build zvm
+zig build test         # Run tests
 ./devtools/verify-registry.sh
 ```
 
-开发时可以用 `ZVM_REGISTRY_DIR` 指向另一个扁平 registry 目录。
-
-## English
-
-`zvm` is a Zig Version Manager. The `zvm` executable is written in Zig, but users install it as a prebuilt binary, so installing `zvm` itself does not require Zig.
-
-This repository currently contains the project scaffold, flat registry, install layout, and a buildable CLI skeleton. Network download and extraction for Zig toolchains are not fully implemented yet, but commands already resolve registry versions and exercise the local layout.
-
-### Install zvm
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/embed-zig/zvm/main/install.sh | sh
-```
-
-`install.sh` detects OS and CPU architecture, downloads the matching `zvm-<os>-<arch>.tar.gz` from GitHub Releases, verifies it against `SHA256SUMS`, and installs it to:
-
-```text
-~/.zvm/bin/zvm
-```
-
-Add `zvm` to your shell path:
-
-```sh
-export PATH="$HOME/.zvm/bin:$PATH"
-```
-
-Homebrew-managed installs should update with:
-
-```sh
-brew upgrade zvm
-```
-
-### Manage Zig
-
-```sh
-zvm list-remote
-zvm list-remote '0.15.2-esp.*'
-zvm install 0.15.2
-zvm use 0.15.2
-zvm current
-zvm env
-zvm doctor
-```
-
-`zvm` uses a single PATH directory:
-
-```text
-~/.zvm/bin/zvm
-~/.zvm/bin/zig -> ../versions/0.15.2-esp.r4/zig
-~/.zvm/versions/0.15.2-esp.r4/
-```
-
-There is no separate `shims` directory. `zvm use <version>` only updates the `~/.zvm/bin/zig` symlink.
-
-### Version Names
-
-Official Zig releases use canonical SemVer such as `0.15.2`. ESP bootstrap builds use legal SemVer pre-release names such as `0.15.2-esp.r4`.
-
-`zvm` supports simple pattern expressions such as `0.15.2-esp.*`; the highest SemVer precedence match is selected.
-
-### Registry
-
-Registry files are flat:
-
-```text
-registry/0.15.2.zon
-registry/0.15.2-esp.r4.zon
-registry/0.16.0-esp.r1.zon
-registry/0.16.0.zon
-registry/0.17.0-dev.135+9df02121d.zon
-```
-
-The checked-in registry entries use real upstream URLs, sizes, and SHA-256 checksums from the Zig download index and `embed-zig/esp-zig-bootstrap` GitHub Releases.
-
-Official Zig registry entries include `macos-x86_64`, `macos-aarch64`, `linux-x86_64`, `linux-aarch64`, `windows-x86_64`, and `windows-aarch64`. ESP registry entries cover the platforms published by the upstream release artifacts.
-
-### Development
-
-```sh
-zig build
-zig build test
-sh -n install.sh devtools/*.sh
-./devtools/verify-registry.sh
-```
-
-Use `ZVM_REGISTRY_DIR` to point the CLI at another flat registry directory while developing.
+Set `ZVM_REGISTRY_DIR` to test with a custom registry during development.
