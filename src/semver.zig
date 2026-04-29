@@ -69,6 +69,8 @@ pub fn matchesPattern(version_text: []const u8, pattern: []const u8) bool {
         return std.mem.startsWith(u8, version_text, prefix);
     }
 
+    if (matchesPartialCore(version, pattern)) return true;
+
     const parsed_pattern = Version.parse(pattern) catch return false;
     if (std.mem.eql(u8, version_text, pattern)) return true;
     if (parsed_pattern.build != null) return false;
@@ -79,6 +81,27 @@ pub fn matchesPattern(version_text: []const u8, pattern: []const u8) bool {
     const prerelease = version.prerelease.?;
     if (!std.mem.startsWith(u8, prerelease, prefix)) return false;
     return prerelease.len > prefix.len and prerelease[prefix.len] == '.';
+}
+
+fn matchesPartialCore(version: Version, pattern: []const u8) bool {
+    if (std.mem.indexOfAny(u8, pattern, "-+*") != null) return false;
+
+    var parts = std.mem.splitScalar(u8, pattern, '.');
+    const major_text = parts.next() orelse return false;
+    const minor_text = parts.next();
+    const patch_text = parts.next();
+    if (parts.next() != null) return false;
+    if (patch_text != null) return false;
+
+    const major = parseNumber(major_text) catch return false;
+    if (version.major != major) return false;
+
+    if (minor_text) |text| {
+        const minor = parseNumber(text) catch return false;
+        return version.minor == minor;
+    }
+
+    return true;
 }
 
 pub fn highestMatching(versions: []const []const u8, pattern: []const u8) SemverError!?[]const u8 {

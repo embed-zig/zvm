@@ -30,7 +30,9 @@ test "zvm wildcard patterns choose the highest matching version" {
     try std.testing.expectEqualStrings("0.15.2", (try semver.highestMatching(&versions, "0.15.2")).?);
     try std.testing.expectEqualStrings("0.16.0-esp.r1", (try semver.highestMatching(&versions, "0.16.0-esp.*")).?);
     try std.testing.expectEqualStrings("0.16.0-esp.r1", (try semver.highestMatching(&versions, "0.16.0-esp")).?);
+    try std.testing.expectEqualStrings("0.16.0", (try semver.highestMatching(&versions, "0.16")).?);
     try std.testing.expectEqualStrings("0.16.0", (try semver.highestMatching(&versions, "0.16.*")).?);
+    try std.testing.expectEqualStrings("0.17.0-dev.135+9df02121d", (try semver.highestMatching(&versions, "0")).?);
     try std.testing.expectEqualStrings("0.17.0-dev.135+9df02121d", (try semver.highestMatching(&versions, "0.17.*")).?);
     try std.testing.expectEqualStrings("0.17.0-dev.135+9df02121d", (try semver.highestMatching(&versions, "0.17.0-dev")).?);
 }

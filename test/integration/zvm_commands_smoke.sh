@@ -149,6 +149,7 @@ zvm_versions_fs="$zvm_home_fs/versions"
 
 make_archive "0.15.2" "$target"
 make_archive "0.15.2-esp.r4" "$target"
+make_archive "0.16.0" "$target"
 
 run_zvm() {
     if [ -n "$zvm_home_arg" ]; then
@@ -199,6 +200,9 @@ assert_file_exists "$zvm_versions_fs/0.15.2/$zig_exe" "install 0.15.2"
 run_zvm_with_registry install '0.15.2-esp'
 assert_dir_exists "$zvm_versions_fs/0.15.2-esp.r4" "install 0.15.2-esp.r4"
 assert_file_exists "$zvm_versions_fs/0.15.2-esp.r4/$zig_exe" "install 0.15.2-esp.r4"
+run_zvm_with_registry install 0.16
+assert_dir_exists "$zvm_versions_fs/0.16.0" "install 0.16.0"
+assert_file_exists "$zvm_versions_fs/0.16.0/$zig_exe" "install 0.16.0"
 
 run_zvm use 0.15.2
 assert_eq "$(run_zvm current)" "0.15.2" "current after use 0.15.2"
@@ -209,5 +213,10 @@ run_zvm use '0.15.2-esp'
 assert_eq "$(run_zvm current)" "0.15.2-esp.r4" "current after use 0.15.2-esp"
 assert_file_exists "$zvm_bin_fs/$zig_exe" "use 0.15.2-esp.r4"
 assert_zig_on_path "0.15.2-esp.r4"
+
+run_zvm use 0.16
+assert_eq "$(run_zvm current)" "0.16.0" "current after use 0.16"
+assert_file_exists "$zvm_bin_fs/$zig_exe" "use 0.16.0"
+assert_zig_on_path "0.16.0"
 
 run_zvm doctor

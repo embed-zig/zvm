@@ -22,6 +22,9 @@ test "registry loads flat version files and resolves patterns" {
     const official = (try reg.resolve("0.16.*")).?;
     try std.testing.expectEqualStrings("0.16.0", official.version);
 
+    const official_prefix = (try reg.resolve("0.16")).?;
+    try std.testing.expectEqualStrings("0.16.0", official_prefix.version);
+
     const esp_016 = (try reg.resolve("0.16.0-esp.*")).?;
     try std.testing.expectEqualStrings("0.16.0-esp.r1", esp_016.version);
 
