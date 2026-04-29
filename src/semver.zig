@@ -61,7 +61,7 @@ pub const Version = struct {
 };
 
 pub fn matchesPattern(version_text: []const u8, pattern: []const u8) bool {
-    _ = Version.parse(version_text) catch return false;
+    const version = Version.parse(version_text) catch return false;
     if (std.mem.eql(u8, pattern, "*")) return true;
 
     if (std.mem.endsWith(u8, pattern, ".*")) {
@@ -69,8 +69,16 @@ pub fn matchesPattern(version_text: []const u8, pattern: []const u8) bool {
         return std.mem.startsWith(u8, version_text, prefix);
     }
 
-    _ = Version.parse(pattern) catch return false;
-    return std.mem.eql(u8, version_text, pattern);
+    const parsed_pattern = Version.parse(pattern) catch return false;
+    if (std.mem.eql(u8, version_text, pattern)) return true;
+    if (parsed_pattern.build != null) return false;
+    if (parsed_pattern.prerelease == null or version.prerelease == null) return false;
+    if (version.major != parsed_pattern.major or version.minor != parsed_pattern.minor or version.patch != parsed_pattern.patch) return false;
+
+    const prefix = parsed_pattern.prerelease.?;
+    const prerelease = version.prerelease.?;
+    if (!std.mem.startsWith(u8, prerelease, prefix)) return false;
+    return prerelease.len > prefix.len and prerelease[prefix.len] == '.';
 }
 
 pub fn highestMatching(versions: []const []const u8, pattern: []const u8) SemverError!?[]const u8 {

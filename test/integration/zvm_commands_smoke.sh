@@ -196,7 +196,7 @@ ZVM_REGISTRY_DIR="$registry_dir_arg" "$zvm_cmd" list-remote
 run_zvm_with_registry install 0.15.2
 assert_dir_exists "$zvm_versions_fs/0.15.2" "install 0.15.2"
 assert_file_exists "$zvm_versions_fs/0.15.2/$zig_exe" "install 0.15.2"
-run_zvm_with_registry install '0.15.2-esp.*'
+run_zvm_with_registry install '0.15.2-esp'
 assert_dir_exists "$zvm_versions_fs/0.15.2-esp.r4" "install 0.15.2-esp.r4"
 assert_file_exists "$zvm_versions_fs/0.15.2-esp.r4/$zig_exe" "install 0.15.2-esp.r4"
 
@@ -205,8 +205,8 @@ assert_eq "$(run_zvm current)" "0.15.2" "current after use 0.15.2"
 assert_file_exists "$zvm_bin_fs/$zig_exe" "use 0.15.2"
 assert_zig_on_path "0.15.2"
 
-run_zvm use '0.15.2-esp.*'
-assert_eq "$(run_zvm current)" "0.15.2-esp.r4" "current after use 0.15.2-esp.*"
+run_zvm use '0.15.2-esp'
+assert_eq "$(run_zvm current)" "0.15.2-esp.r4" "current after use 0.15.2-esp"
 assert_file_exists "$zvm_bin_fs/$zig_exe" "use 0.15.2-esp.r4"
 assert_zig_on_path "0.15.2-esp.r4"
 
