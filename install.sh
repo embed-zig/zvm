@@ -106,15 +106,20 @@ append_path_once() {
         return 1
     fi
 
-    if [ -f "$file" ] && awk -v bin_dir="$bin_dir" 'index($0, bin_dir) { found = 1 } END { exit(found ? 0 : 1) }' "$file"; then
-        return 1
-    fi
+    path_tmp="$tmp/path-config.$$"
+    awk -v bin_dir="$bin_dir" '
+        skip_next == 1 { skip_next = 0; next }
+        $0 == "# zvm" { skip_next = 1; next }
+        index($0, bin_dir) { next }
+        { print }
+    ' "$file" > "$path_tmp"
 
     {
         echo
         echo "# zvm"
         echo "$line"
-    } >> "$file"
+    } >> "$path_tmp"
+    mv "$path_tmp" "$file"
     return 0
 }
 
@@ -155,7 +160,7 @@ configure_path() {
 
     if [ -n "$configured" ]; then
         echo
-        echo "Added zvm to PATH in:$configured"
+        echo "Configured zvm PATH in:$configured"
         echo "Restart your shell or run:"
         echo "  export PATH=\"$bin_dir:\$PATH\""
     else

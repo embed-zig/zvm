@@ -105,9 +105,28 @@ assert_eq() {
     fi
 }
 
+assert_dir_exists() {
+    dir="$1"
+    label="$2"
+    if [ ! -d "$dir" ]; then
+        echo "$label: missing directory $dir" >&2
+        exit 1
+    fi
+}
+
+assert_file_exists() {
+    file="$1"
+    label="$2"
+    if [ ! -f "$file" ]; then
+        echo "$label: missing file $file" >&2
+        exit 1
+    fi
+}
+
 mkdir -p "$registry_dir" "$archive_dir"
 target="$(target_tag)"
 registry_dir_arg="$(zvm_path "$registry_dir")"
+zig_exe="$(zig_name)"
 
 if command -v zvm >/dev/null 2>&1; then
     zvm_cmd="zvm"
@@ -120,9 +139,13 @@ fi
 
 if [ -n "$zvm_home" ]; then
     zvm_home_arg="$(zvm_path "$zvm_home")"
+    zvm_home_fs="$zvm_home"
 else
     zvm_home_arg=""
+    zvm_home_fs="${ZVM_HOME:-$HOME/.zvm}"
 fi
+zvm_bin_fs="$zvm_home_fs/bin"
+zvm_versions_fs="$zvm_home_fs/versions"
 
 make_archive "0.15.2" "$target"
 make_archive "0.15.2-esp.r4" "$target"
@@ -143,27 +166,48 @@ run_zvm_with_registry() {
     fi
 }
 
+zig_from_path() {
+    if [ -n "$zvm_home_arg" ]; then
+        PATH="$zvm_bin_fs:$PATH" "$zig_exe" version
+    else
+        "$zig_exe" version
+    fi
+}
+
+zig_path_from_shell() {
+    if [ -n "$zvm_home_arg" ]; then
+        PATH="$zvm_bin_fs:$PATH" command -v "$zig_exe" || true
+    else
+        command -v "$zig_exe" || true
+    fi
+}
+
+assert_zig_on_path() {
+    expected_version="$1"
+    expected_path="$zvm_bin_fs/$zig_exe"
+    actual_path="$(zig_path_from_shell)"
+    assert_eq "$actual_path" "$expected_path" "$zig_exe path after use"
+    assert_eq "$(zig_from_path)" "$expected_version" "$zig_exe version after use"
+}
+
 run_zvm --version
 ZVM_REGISTRY_DIR="$registry_dir_arg" "$zvm_cmd" list-remote
 
 run_zvm_with_registry install 0.15.2
+assert_dir_exists "$zvm_versions_fs/0.15.2" "install 0.15.2"
+assert_file_exists "$zvm_versions_fs/0.15.2/$zig_exe" "install 0.15.2"
 run_zvm_with_registry install '0.15.2-esp.*'
+assert_dir_exists "$zvm_versions_fs/0.15.2-esp.r4" "install 0.15.2-esp.r4"
+assert_file_exists "$zvm_versions_fs/0.15.2-esp.r4/$zig_exe" "install 0.15.2-esp.r4"
 
 run_zvm use 0.15.2
 assert_eq "$(run_zvm current)" "0.15.2" "current after use 0.15.2"
+assert_file_exists "$zvm_bin_fs/$zig_exe" "use 0.15.2"
+assert_zig_on_path "0.15.2"
 
 run_zvm use '0.15.2-esp.*'
 assert_eq "$(run_zvm current)" "0.15.2-esp.r4" "current after use 0.15.2-esp.*"
-
-case "$(uname -s)" in
-    MINGW*|MSYS*|CYGWIN*) ;;
-    *)
-        if [ -n "$zvm_home_arg" ]; then
-            assert_eq "$(PATH="$zvm_home/bin:$PATH" zig)" "0.15.2-esp.r4" "zig through zvm bin"
-        else
-            assert_eq "$(zig)" "0.15.2-esp.r4" "zig through configured PATH"
-        fi
-        ;;
-esac
+assert_file_exists "$zvm_bin_fs/$zig_exe" "use 0.15.2-esp.r4"
+assert_zig_on_path "0.15.2-esp.r4"
 
 run_zvm doctor

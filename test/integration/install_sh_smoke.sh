@@ -29,7 +29,18 @@ if [ "$home_dir" != "$HOME" ]; then
     export HOME="$home_dir"
 fi
 
-: > "$home_dir/.bashrc"
+mkdir -p "$home_dir/.local/bin"
+{
+    echo '#!/bin/sh'
+    echo 'echo shadow-zig'
+} > "$home_dir/.local/bin/zig"
+chmod +x "$home_dir/.local/bin/zig"
+
+{
+    echo "# zvm"
+    echo "export PATH=\"$install_root/bin:\$PATH\""
+    echo "export PATH=\"$home_dir/.local/bin:\$PATH\""
+} > "$home_dir/.bashrc"
 
 candidate_shell_files="
 $home_dir/.zshrc
@@ -52,6 +63,12 @@ sh "$release_dir/install.sh"
 
 if ! grep "$install_root/bin" "$home_dir/.bashrc" >/dev/null 2>&1; then
     echo "install.sh did not add zvm to existing .bashrc" >&2
+    exit 1
+fi
+
+if [ "$(awk -v bin_dir="$install_root/bin" 'index($0, bin_dir) { line = NR } END { print line + 0 }' "$home_dir/.bashrc")" -lt \
+     "$(awk -v local_bin="$home_dir/.local/bin" 'index($0, local_bin) { line = NR } END { print line + 0 }' "$home_dir/.bashrc")" ]; then
+    echo "install.sh did not move zvm PATH after later PATH entries" >&2
     exit 1
 fi
 

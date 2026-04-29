@@ -158,6 +158,31 @@ pub fn useVersion(allocator: std.mem.Allocator, version: []const u8) !void {
     try file.writeAll("\n");
 }
 
+pub fn pathZig(allocator: std.mem.Allocator) !?[]const u8 {
+    const path_value = std.process.getEnvVarOwned(allocator, "PATH") catch |err| switch (err) {
+        error.EnvironmentVariableNotFound => return null,
+        else => return err,
+    };
+    defer allocator.free(path_value);
+
+    const delimiter: u8 = if (@import("builtin").os.tag == .windows) ';' else ':';
+    var it = std.mem.splitScalar(u8, path_value, delimiter);
+    while (it.next()) |dir| {
+        if (dir.len == 0) continue;
+
+        const candidate = try std.fs.path.join(allocator, &.{ dir, zpath.zigExecutableName() });
+        const exists = if (std.fs.path.isAbsolute(candidate))
+            pathExistsAbsolute(candidate)
+        else
+            pathExistsRelative(candidate);
+        if (exists) return candidate;
+
+        allocator.free(candidate);
+    }
+
+    return null;
+}
+
 pub fn currentVersion(allocator: std.mem.Allocator) !?[]const u8 {
     const current = try zpath.currentFilePath(allocator);
     defer allocator.free(current);
@@ -217,6 +242,16 @@ pub fn currentFromSymlink(allocator: std.mem.Allocator) !?[]const u8 {
     const slash = std.mem.indexOfScalar(u8, rest, '/') orelse return null;
     const copy = try allocator.dupe(u8, rest[0..slash]);
     return @as(?[]const u8, copy);
+}
+
+fn pathExistsAbsolute(path: []const u8) bool {
+    std.fs.accessAbsolute(path, .{}) catch return false;
+    return true;
+}
+
+fn pathExistsRelative(path: []const u8) bool {
+    std.fs.cwd().access(path, .{}) catch return false;
+    return true;
 }
 
 fn materializeArchive(allocator: std.mem.Allocator, url: []const u8, output_path: []const u8) !void {

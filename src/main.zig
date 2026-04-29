@@ -114,6 +114,7 @@ fn cmdUse(allocator: std.mem.Allocator, args: []const []const u8) !void {
         else => return use_err,
     };
     try out("now using Zig {s}\n", .{resolved});
+    try warnIfZigPathShadowed(allocator);
 }
 
 fn cmdCurrent(allocator: std.mem.Allocator) !void {
@@ -148,6 +149,11 @@ fn cmdDoctor(allocator: std.mem.Allocator) !void {
     const current = try installer.currentVersion(allocator);
     defer if (current) |value| allocator.free(value);
     try out("current: {s}\n", .{current orelse "none"});
+
+    const path_zig = try installer.pathZig(allocator);
+    defer if (path_zig) |value| allocator.free(value);
+    try out("PATH zig: {s}\n", .{path_zig orelse "not found"});
+    try warnIfZigPathShadowed(allocator);
 }
 
 fn cmdSelfUpdate(allocator: std.mem.Allocator) !void {
@@ -159,6 +165,31 @@ fn cmdSelfUpdate(allocator: std.mem.Allocator) !void {
 fn usage(text: []const u8) !void {
     try err("usage: zvm {s}\n", .{text});
     std.process.exit(64);
+}
+
+fn warnIfZigPathShadowed(allocator: std.mem.Allocator) !void {
+    const expected = try zpath.zigLinkPath(allocator);
+    defer allocator.free(expected);
+    const bin = try zpath.binDir(allocator);
+    defer allocator.free(bin);
+
+    const path_zig = try installer.pathZig(allocator);
+    defer if (path_zig) |value| allocator.free(value);
+
+    if (path_zig) |actual| {
+        if (std.mem.eql(u8, actual, expected)) return;
+        try err(
+            "warning: zig on PATH is {s}, not {s}\n" ++
+                "         put {s} before other Zig installs in PATH, then run: rehash\n",
+            .{ actual, expected, bin },
+        );
+        return;
+    }
+
+    try err(
+        "warning: zig is not on PATH; add zvm with: export PATH=\"{s}:$PATH\"\n",
+        .{bin},
+    );
 }
 
 fn help() !void {
