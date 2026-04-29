@@ -10,6 +10,8 @@ env:
 
 permissions:
   contents: write
+  issues: read
+  pull-requests: read
 
 jobs:
   release:
@@ -18,6 +20,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install Zig
         uses: mlugg/setup-zig@v2
@@ -51,53 +55,88 @@ jobs:
 
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
+          previous_tag="$(git tag --sort=-creatordate --merged "$tag" | awk -v tag="$tag" '$0 != tag { print; exit }')"
+          if [ -z "$previous_tag" ]; then
+            base_ref="$(git rev-list --max-parents=0 "$tag")"
+          else
+            base_ref="$previous_tag"
+          fi
+
+          echo "base_ref=$base_ref" >> "$GITHUB_OUTPUT"
+
       - name: Build release artifacts
         shell: bash
         run: ./devtools/release.sh "${{ steps.release.outputs.tag }}"
+
+      - name: Generate Copilot release notes
+        id: copilot_notes
+        uses: github/copilot-release-notes@main
+        with:
+          base-ref: ${{ steps.release.outputs.base_ref }}
+          head-ref: ${{ steps.release.outputs.tag }}
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+
+      - name: Write release notes
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          COPILOT_RELEASE_NOTES: ${{ steps.copilot_notes.outputs.release-notes }}
+        run: |
+          notes="dist/$RELEASE_TAG/RELEASE_NOTES.md"
+          cat > "$notes" <<EOF
+          ## Install
+
+          Install this release with the bootstrap script:
+
+          \`\`\`sh
+          curl -fsSL https://github.com/embed-zig/zvm/releases/download/$RELEASE_TAG/install.sh | sh
+          \`\`\`
+
+          The installer adds zvm to existing shell startup files when possible.
+
+          Restart your shell, or run this for the current shell session:
+
+          \`\`\`sh
+          export PATH="\$HOME/.zvm/bin:\$PATH"
+          \`\`\`
+
+          Verify the installation:
+
+          \`\`\`sh
+          zvm --version
+          zvm doctor
+          \`\`\`
+
+          ## Manual Install
+
+          Download the archive for your platform, verify it with \`SHA256SUMS\`, and place the \`zvm\` binary in \`~/.zvm/bin\`.
+
+          Supported release assets:
+
+          - \`zvm-linux-x86_64.tar.gz\`
+          - \`zvm-linux-aarch64.tar.gz\`
+          - \`zvm-macos-x86_64.tar.gz\`
+          - \`zvm-macos-aarch64.tar.gz\`
+          - \`zvm-windows-x86_64.tar.gz\`
+          - \`zvm-windows-aarch64.tar.gz\`
+
+          The bootstrap script verifies checksums automatically.
+          EOF
+
+          {
+            echo
+            echo "## Changelog"
+            echo
+            printf '%s\n' "$COPILOT_RELEASE_NOTES"
+          } >> "$notes"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.release.outputs.tag }}
           name: ${{ steps.release.outputs.tag }}
-          body: |
-            ## Install
-
-            Install this release with the bootstrap script:
-
-            ```sh
-            curl -fsSL https://github.com/embed-zig/zvm/releases/download/${{ steps.release.outputs.tag }}/install.sh | sh
-            ```
-
-            The installer adds zvm to existing shell startup files when possible.
-
-            Restart your shell, or run this for the current shell session:
-
-            ```sh
-            export PATH="$HOME/.zvm/bin:$PATH"
-            ```
-
-            Verify the installation:
-
-            ```sh
-            zvm --version
-            zvm doctor
-            ```
-
-            ## Manual Install
-
-            Download the archive for your platform, verify it with `SHA256SUMS`, and place the `zvm` binary in `~/.zvm/bin`.
-
-            Supported release assets:
-
-            - `zvm-linux-x86_64.tar.gz`
-            - `zvm-linux-aarch64.tar.gz`
-            - `zvm-macos-x86_64.tar.gz`
-            - `zvm-macos-aarch64.tar.gz`
-            - `zvm-windows-x86_64.tar.gz`
-            - `zvm-windows-aarch64.tar.gz`
-
-            The bootstrap script verifies checksums automatically.
+          body_path: dist/${{ steps.release.outputs.tag }}/RELEASE_NOTES.md
           files: |
             dist/${{ steps.release.outputs.tag }}/zvm-*
             dist/${{ steps.release.outputs.tag }}/install.sh
