@@ -11,11 +11,17 @@ The zvm skill at `skills/zvm/SKILL.md` helps Cursor/windsurf agents manage Zig i
 
 ## Installing the Skill
 
+Install zvm first:
+
 ```sh
-npx skills add zvm
+curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | sh
 ```
 
-Or manually copy `skills/zvm/` to your agent skills directory.
+Then install the agent skill globally:
+
+```sh
+npx skills add embed-zig/zvm --skill zvm -g -y
+```
 
 ## For Skill Authors
 

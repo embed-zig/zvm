@@ -11,11 +11,17 @@ zvm skill 位于 `skills/zvm/SKILL.md`，帮助 Cursor/windsurf 代理管理 Zig
 
 ## 安装 Skill
 
+先安装 zvm：
+
 ```sh
-npx skills add zvm
+curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | sh
 ```
 
-或手动将 `skills/zvm/` 复制到您的 agent skills 目录。
+再全局安装 agent skill：
+
+```sh
+npx skills add embed-zig/zvm --skill zvm -g -y
+```
 
 ## 给 Skill 作者的建议
 

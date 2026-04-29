@@ -1,3 +1,8 @@
+---
+name: zvm
+description: Manage zvm, the Zig Version Manager. Use when installing or updating zvm, installing Zig toolchains, switching active Zig versions, or troubleshooting zvm PATH and Zig version issues.
+---
+
 # zvm Agent Skill
 
 Use this skill when a user wants to install, update, or operate zvm, the Zig Version Manager.
