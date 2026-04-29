@@ -6,7 +6,7 @@
 
 > 用一个 symlink 管理 Zig 版本。没有 shims，没有 shell 钩子，没有依赖。
 
-`zvm` 可以安装和切换官方 Zig 版本以及 ESP Zig bootstrap 构建版本。它用 Zig 编写，但以预编译二进制形式发布——安装 zvm 本身不需要 Zig。
+`zvm` 可以安装和切换官方 Zig 版本以及 ESP Zig bootstrap 构建版本。它用 Zig 编写，但以预编译二进制形式发布；安装 zvm 本身不需要 Zig。
 
 [安装](#安装与快速开始) · [Agent Skill](#agent-skill) · [命令](#可用命令) · [版本模式](#版本模式) · [文档](#文档)
 
@@ -33,9 +33,9 @@ zvm use 0.15
 zig version
 ```
 
-### 快速开始（AI Agent）
+### 快速开始（AI Agents）
 
-如果你是 AI Agent，正在帮助用户设置 zvm，先安装 zvm，再全局安装 skill：
+如果你是 AI agent，正在帮助用户设置 zvm，先安装 zvm，再用 Skills CLI 全局安装 skill：
 
 ```sh
 # 安装 CLI
@@ -108,12 +108,14 @@ zvm 支持基于 SemVer 的模式匹配：
 
 ## Agent Skill
 
-zvm 也从本仓库发布 AI Agent Skill。先安装 zvm，再安装 skill：
+zvm 也从 `skills/zvm/SKILL.md` 提供兼容 [skills.sh](https://skills.sh) 的 Agent Skill。先安装 zvm，再安装 skill：
 
 ```sh
 curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | sh
 npx skills add embed-zig/zvm --skill zvm -g -y
 ```
+
+可用 `npx skills add embed-zig/zvm --list` 验证 skill 是否能被发现。通过 Skills CLI 从公开仓库安装后，它可以被 skills.sh 目录自动收录。
 
 详情参见 [Agent Skill](docs/zh/agent-skill.md)。
 
@@ -123,7 +125,7 @@ npx skills add embed-zig/zvm --skill zvm -g -y
 - [Shell 设置](docs/zh/shell-integration.md) — PATH 配置
 - [目录布局](docs/zh/install-layout.md) — 文件组织方式
 - [Registry 格式](docs/zh/registry-format.md) — 添加新版本
-- [Agent Skill](docs/zh/agent-skill.md) — 用于 Cursor/windsurf 代理
+- [Agent Skill](docs/zh/agent-skill.md) — 用于兼容 skills.sh 的 AI agents
 
 ## 更新 zvm
 

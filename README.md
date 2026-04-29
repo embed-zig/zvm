@@ -6,7 +6,7 @@
 
 > Manage Zig toolchains with a single symlink. No shims, no shell hooks, no dependencies.
 
-`zvm` installs and switches between official Zig releases and ESP Zig bootstrap builds. It's written in Zig but distributed as prebuilt binaries—installing zvm itself does not require Zig.
+`zvm` installs and switches between official Zig releases and ESP Zig bootstrap builds. It's written in Zig but distributed as prebuilt binaries; installing zvm itself does not require Zig.
 
 [Install](#installation--quick-start) · [Agent Skill](#agent-skill) · [Commands](#available-commands) · [Version Patterns](#version-patterns) · [Docs](#documentation)
 
@@ -33,9 +33,9 @@ zvm use 0.15
 zig version
 ```
 
-### Quick Start (AI Agent)
+### Quick Start (AI Agents)
 
-If you are an AI Agent helping the user set up zvm, install zvm first, then install the skill globally:
+If you are an AI agent helping the user set up zvm, install zvm first, then install the skill globally with the Skills CLI:
 
 ```sh
 # Install CLI
@@ -108,12 +108,14 @@ Official releases use canonical SemVer (`0.15.2`). ESP builds use pre-release id
 
 ## Agent Skill
 
-zvm also publishes an AI Agent Skill from this repository. Install zvm first, then install the skill:
+zvm also ships a [skills.sh](https://skills.sh)-compatible Agent Skill from `skills/zvm/SKILL.md`. Install zvm first, then install the skill:
 
 ```sh
 curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | sh
 npx skills add embed-zig/zvm --skill zvm -g -y
 ```
+
+The skill is discoverable by `npx skills add embed-zig/zvm --list`. Public installs through the Skills CLI allow it to appear in the skills.sh directory.
 
 See [Agent Skill](docs/en/agent-skill.md) for details.
 
@@ -123,7 +125,7 @@ See [Agent Skill](docs/en/agent-skill.md) for details.
 - [Shell Setup](docs/en/shell-integration.md) — PATH configuration
 - [Directory Layout](docs/en/install-layout.md) — How files are organized
 - [Registry Format](docs/en/registry-format.md) — Adding new versions
-- [Agent Skill](docs/en/agent-skill.md) — For Cursor/windsurf agents
+- [Agent Skill](docs/en/agent-skill.md) — For skills.sh-compatible AI agents
 
 ## Updating zvm
 

@@ -106,6 +106,7 @@ pub fn installArtifact(allocator: std.mem.Allocator, version: []const u8, artifa
     progress("Installing Zig {s}", .{version});
     const zig_source = try findZigExecutable(allocator, extract_dir);
     defer allocator.free(zig_source);
+    const install_source = std.fs.path.dirname(zig_source) orelse return error.ZigExecutableNotFound;
 
     const version_dir = try zpath.versionDir(allocator, version);
     defer allocator.free(version_dir);
@@ -113,11 +114,10 @@ pub fn installArtifact(allocator: std.mem.Allocator, version: []const u8, artifa
         error.FileNotFound => {},
         else => return err,
     };
-    try std.fs.cwd().makePath(version_dir);
+    try std.fs.renameAbsolute(install_source, version_dir);
 
     const zig_dest = try zpath.zigPath(allocator, version);
     defer allocator.free(zig_dest);
-    try std.fs.copyFileAbsolute(zig_source, zig_dest, .{});
     if (@import("builtin").os.tag != .windows) {
         try run(allocator, &.{ "chmod", "+x", zig_dest });
     }

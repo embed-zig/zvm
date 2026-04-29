@@ -67,14 +67,32 @@ make_archive() {
     src="$work/src/$version"
     archive="$archive_dir/$version.tar.gz"
 
-    mkdir -p "$src"
+    mkdir -p "$src/lib/zig"
+    echo "fake zig stdlib for $version" > "$src/lib/zig/std.zig"
     {
         echo '#!/bin/sh'
+        echo 'target="$0"'
+        echo 'while [ -L "$target" ]; do'
+        echo '    link="$(readlink "$target")"'
+        echo '    case "$link" in'
+        echo '        /*) target="$link" ;;'
+        echo '        *) target="$(dirname -- "$target")/$link" ;;'
+        echo '    esac'
+        echo 'done'
+        echo 'script_dir="$(CDPATH= cd -- "$(dirname -- "$target")" && pwd -P)"'
+        echo 'if [ "${1:-}" = "env" ]; then'
+        echo '    if [ ! -f "$script_dir/lib/zig/std.zig" ]; then'
+        echo '        echo "missing Zig lib directory next to $0" >&2'
+        echo '        exit 1'
+        echo '    fi'
+        echo '    echo "ZIG_LIB_DIR=$script_dir/lib/zig"'
+        echo '    exit 0'
+        echo 'fi'
         echo "echo $version"
     } > "$src/$name"
     chmod +x "$src/$name"
 
-    tar -C "$src" -czf "$archive" "$name"
+    tar -C "$src" -czf "$archive" .
     checksum="$(sha256_file "$archive")"
     size="$(file_size "$archive")"
     archive_url_path="$(zvm_path "$archive")"
@@ -153,7 +171,7 @@ make_archive "0.16.0" "$target"
 
 run_zvm() {
     if [ -n "$zvm_home_arg" ]; then
-        ZVM_HOME="$zvm_home_arg" "$zvm_cmd" "$@"
+        PATH="$zvm_bin_fs:$PATH" ZVM_HOME="$zvm_home_arg" "$zvm_cmd" "$@"
     else
         "$zvm_cmd" "$@"
     fi
@@ -161,7 +179,7 @@ run_zvm() {
 
 run_zvm_with_registry() {
     if [ -n "$zvm_home_arg" ]; then
-        ZVM_HOME="$zvm_home_arg" ZVM_REGISTRY_DIR="$registry_dir_arg" "$zvm_cmd" "$@"
+        PATH="$zvm_bin_fs:$PATH" ZVM_HOME="$zvm_home_arg" ZVM_REGISTRY_DIR="$registry_dir_arg" "$zvm_cmd" "$@"
     else
         ZVM_REGISTRY_DIR="$registry_dir_arg" "$zvm_cmd" "$@"
     fi
@@ -183,12 +201,21 @@ zig_path_from_shell() {
     fi
 }
 
+zig_env_from_path() {
+    if [ -n "$zvm_home_arg" ]; then
+        PATH="$zvm_bin_fs:$PATH" "$zig_exe" env >/dev/null
+    else
+        "$zig_exe" env >/dev/null
+    fi
+}
+
 assert_zig_on_path() {
     expected_version="$1"
     expected_path="$zvm_bin_fs/$zig_exe"
     actual_path="$(zig_path_from_shell)"
     assert_eq "$actual_path" "$expected_path" "$zig_exe path after use"
     assert_eq "$(zig_from_path)" "$expected_version" "$zig_exe version after use"
+    zig_env_from_path
 }
 
 run_zvm --version

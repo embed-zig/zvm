@@ -1,7 +1,9 @@
 ---
 name: zvm
-version: 1.0.0
-description: "Zig Version Manager (zvm): install or update zvm, install Zig toolchains, switch active Zig versions, resolve SemVer patterns such as 0.15 / 0.15.2-esp, and troubleshoot PATH issues where zig does not point to ~/.zvm/bin/zig. Use when the user mentions zvm, Zig version management, ESP Zig builds, zvm install/use/current/doctor, or asks why zig version does not match zvm current."
+description: "Manages Zig toolchains with zvm: install or update zvm, install Zig versions, switch active Zig, resolve SemVer patterns such as 0.15 and 0.15.2-esp, and troubleshoot PATH issues where zig does not point to ~/.zvm/bin/zig. Use when the user mentions zvm, Zig version management, ESP Zig builds, zvm install/use/current/doctor, or asks why zig version does not match zvm current."
+license: MIT
+metadata:
+  version: "1.0.0"
 ---
 
 # zvm Agent Skill

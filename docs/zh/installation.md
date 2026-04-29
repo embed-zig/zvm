@@ -43,12 +43,12 @@ curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh 
 如需安装指定 release，下载该 release 的 `install.sh`：
 
 ```sh
-curl -fsSL https://github.com/embed-zig/zvm/releases/download/v0.2.1/install.sh | sh
+curl -fsSL https://github.com/embed-zig/zvm/releases/download/v0.2.2/install.sh | sh
 ```
 
 ## AI Agent Skill
 
-如果需要 AI Agent 工作流，先安装 zvm，再全局安装 skill：
+如果需要兼容 skills.sh 的 AI agent 工作流，先安装 zvm，再全局安装 skill：
 
 ```sh
 curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | sh

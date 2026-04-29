@@ -1,12 +1,12 @@
 # Agent Skill
 
-The zvm skill at `skills/zvm/SKILL.md` helps Cursor/windsurf agents manage Zig installations.
+The zvm skill at `skills/zvm/SKILL.md` helps skills.sh-compatible AI agents manage Zig installations.
 
 ## Requirements
 
 - Install zvm before relying on the skill for Zig operations.
 - Install Node.js (`npm`/`npx`) before installing the skill with the Skills CLI.
-- The skill is published from this repository and can be installed globally with `npx skills`.
+- The skill is distributed from this public repository and can be installed globally with `npx skills`.
 
 ## What the Skill Does
 
@@ -37,7 +37,7 @@ zvm --version
 npx skills list -g
 ```
 
-## Quick Start (AI Agent)
+## Quick Start (AI Agents)
 
 If you are an AI Agent helping a user set up zvm, complete these steps:
 
@@ -55,6 +55,24 @@ zvm doctor
 ```
 
 If the user already has zvm installed, skip step 1 and only install/update the skill.
+
+## skills.sh Discoverability
+
+`skills.sh` does not require a separate publish command. A public skill becomes eligible for the directory when it is installable from a public repository through the Skills CLI.
+
+Verify repository discovery:
+
+```sh
+npx skills add embed-zig/zvm --list
+```
+
+Install from the public repository:
+
+```sh
+npx skills add embed-zig/zvm --skill zvm -g -y
+```
+
+After public installs are recorded by the Skills CLI, the skill can appear in the skills.sh directory. Do not set `DISABLE_TELEMETRY` or `DO_NOT_TRACK` when intentionally validating directory discovery.
 
 ## Installing From a Local Checkout
 
@@ -77,7 +95,8 @@ Keep the skill concise and operational:
 - **Do** include specific command sequences for common tasks
 - **Do** link to project docs for registry format details
 - **Don't** duplicate full documentation in the skill file
-- **Do** mention environment variables like `ZVM_HOME`
+- **Do** keep `name` equal to the parent directory name (`zvm`)
+- **Do** keep trigger terms in the frontmatter `description`
 
 ## Example Workflows
 
