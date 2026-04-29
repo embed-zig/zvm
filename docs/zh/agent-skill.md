@@ -2,6 +2,12 @@
 
 zvm skill 位于 `skills/zvm/SKILL.md`，帮助 Cursor/windsurf 代理管理 Zig 安装。
 
+## 环境要求
+
+- 在依赖 skill 执行 Zig 操作前，先安装 zvm。
+- 使用 Skills CLI 安装 skill 前，需要安装 Node.js (`npm`/`npx`)。
+- 该 skill 从本仓库发布，可通过 `npx skills` 全局安装。
+
 ## Skill 功能
 
 - 检查 zvm 是否已安装，如未安装则自动安装
@@ -9,7 +15,7 @@ zvm skill 位于 `skills/zvm/SKILL.md`，帮助 Cursor/windsurf 代理管理 Zig
 - 安装和切换 Zig 版本
 - 验证 PATH 配置
 
-## 安装 Skill
+## 快速开始（人类用户）
 
 先安装 zvm：
 
@@ -17,10 +23,51 @@ zvm skill 位于 `skills/zvm/SKILL.md`，帮助 Cursor/windsurf 代理管理 Zig
 curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | sh
 ```
 
-再全局安装 agent skill：
+全局安装 agent skill：
 
 ```sh
 npx skills add embed-zig/zvm --skill zvm -g -y
+```
+
+验证两部分都可用：
+
+```sh
+export PATH="$HOME/.zvm/bin:$PATH"
+zvm --version
+npx skills list -g
+```
+
+## 快速开始（AI Agent）
+
+如果你是 AI Agent，正在帮助用户设置 zvm，按以下步骤执行：
+
+```sh
+# 1. 安装 zvm
+curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | sh
+
+# 2. 全局安装 zvm skill
+npx skills add embed-zig/zvm --skill zvm -g -y
+
+# 3. 验证 CLI
+export PATH="$HOME/.zvm/bin:$PATH"
+zvm --version
+zvm doctor
+```
+
+如果用户已经安装了 zvm，可以跳过第 1 步，只安装或更新 skill。
+
+## 从本地 checkout 安装
+
+开发期间，在仓库根目录验证 skill 能被发现：
+
+```sh
+npx skills add . --list
+```
+
+从本地 checkout 全局安装：
+
+```sh
+npx skills add . --skill zvm -g -y
 ```
 
 ## 给 Skill 作者的建议

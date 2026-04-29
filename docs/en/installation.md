@@ -2,6 +2,12 @@
 
 zvm is distributed as prebuilt binaries. No existing Zig installation required.
 
+## Requirements
+
+- zvm itself requires only `curl`, `tar`, and a POSIX-like shell for the installer.
+- Zig is not required to install zvm.
+- Node.js (`npm`/`npx`) is only required for installing the optional AI Agent Skill.
+
 ## One-Line Install
 
 ```sh
@@ -37,8 +43,19 @@ curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh 
 To install a specific release, download that release's `install.sh`:
 
 ```sh
-curl -fsSL https://github.com/embed-zig/zvm/releases/download/v0.1.0/install.sh | sh
+curl -fsSL https://github.com/embed-zig/zvm/releases/download/v0.2.1/install.sh | sh
 ```
+
+## AI Agent Skill
+
+For AI Agent workflows, install zvm first, then install the skill globally:
+
+```sh
+curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | sh
+npx skills add embed-zig/zvm --skill zvm -g -y
+```
+
+The skill teaches agents how to install, update, use, and troubleshoot zvm. See [Agent Skill](agent-skill.md).
 
 ## Homebrew
 

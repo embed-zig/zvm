@@ -2,6 +2,12 @@
 
 zvm 以预编译二进制形式分发，不需要现有的 Zig 安装。
 
+## 环境要求
+
+- zvm 本身的安装脚本只需要 `curl`、`tar` 和类 POSIX shell。
+- 安装 zvm 不需要预先安装 Zig。
+- 只有安装可选的 AI Agent Skill 时才需要 Node.js (`npm`/`npx`)。
+
 ## 一行命令安装
 
 ```sh
@@ -37,8 +43,19 @@ curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh 
 如需安装指定 release，下载该 release 的 `install.sh`：
 
 ```sh
-curl -fsSL https://github.com/embed-zig/zvm/releases/download/v0.1.0/install.sh | sh
+curl -fsSL https://github.com/embed-zig/zvm/releases/download/v0.2.1/install.sh | sh
 ```
+
+## AI Agent Skill
+
+如果需要 AI Agent 工作流，先安装 zvm，再全局安装 skill：
+
+```sh
+curl -fsSL https://github.com/embed-zig/zvm/releases/latest/download/install.sh | sh
+npx skills add embed-zig/zvm --skill zvm -g -y
+```
+
+该 skill 会指导 agent 安装、更新、使用和排查 zvm。详见 [Agent Skill](agent-skill.md)。
 
 ## Homebrew
 
