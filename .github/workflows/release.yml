@@ -124,12 +124,14 @@ jobs:
           The bootstrap script verifies checksums automatically.
           EOF
 
-          {
-            echo
-            echo "## Changelog"
-            echo
-            printf '%s\n' "$COPILOT_RELEASE_NOTES"
-          } >> "$notes"
+          if [ -n "$COPILOT_RELEASE_NOTES" ]; then
+            {
+              echo
+              echo "## Changelog"
+              echo
+              printf '%s\n' "$COPILOT_RELEASE_NOTES"
+            } >> "$notes"
+          fi
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
@@ -143,3 +145,13 @@ jobs:
             dist/${{ steps.release.outputs.tag }}/SHA256SUMS
           overwrite_files: true
           fail_on_unmatched_files: true
+
+      - name: Update GitHub Release notes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          gh release edit "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --notes-file "dist/$RELEASE_TAG/RELEASE_NOTES.md"
