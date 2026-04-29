@@ -7,9 +7,21 @@ install_dir="${ZVM_INSTALL_DIR:-$HOME/.zvm}"
 artifact_dir="${ZVM_ARTIFACT_DIR:-}"
 bin_dir="$install_dir/bin"
 modify_path=1
+progress=0
 if [ "${ZVM_NO_MODIFY_PATH:-}" = "1" ]; then
     modify_path=0
 fi
+if [ "${ZVM_PROGRESS:-}" = "1" ]; then
+    progress=1
+elif [ "${ZVM_NO_PROGRESS:-}" = "1" ] || [ "${CI:-}" = "true" ] || [ ! -t 2 ]; then
+    progress=0
+else
+    progress=1
+fi
+
+progress_step() {
+    echo "==> $*" >&2
+}
 
 need() {
     command -v "$1" >/dev/null 2>&1 || {
@@ -40,9 +52,17 @@ download() {
     url="$1"
     output="$2"
     if command -v curl >/dev/null 2>&1; then
-        curl -fsSL "$url" -o "$output"
+        if [ "$progress" = "1" ]; then
+            curl -fL --progress-bar "$url" -o "$output"
+        else
+            curl -fsSL "$url" -o "$output"
+        fi
     elif command -v wget >/dev/null 2>&1; then
-        wget -q "$url" -O "$output"
+        if [ "$progress" = "1" ]; then
+            wget "$url" -O "$output"
+        else
+            wget -q "$url" -O "$output"
+        fi
     else
         echo "zvm installer: missing curl or wget" >&2
         exit 1
@@ -171,15 +191,17 @@ mkdir -p "$tmp"
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 if [ -n "$artifact_dir" ]; then
-    echo "Installing $asset from $artifact_dir"
+    progress_step "Copying $asset from $artifact_dir"
     cp "$artifact_dir/$asset" "$tmp/$asset"
     cp "$artifact_dir/SHA256SUMS" "$tmp/SHA256SUMS"
 else
-    echo "Downloading $asset from $base_url"
+    progress_step "Downloading $asset from $base_url"
     download "$base_url/$asset" "$tmp/$asset"
+    progress_step "Downloading SHA256SUMS"
     download "$base_url/SHA256SUMS" "$tmp/SHA256SUMS"
 fi
 
+progress_step "Verifying checksum"
 expected="$(awk -v asset="$asset" '$2 == asset { print $1 }' "$tmp/SHA256SUMS")"
 if [ -z "$expected" ]; then
     echo "zvm installer: SHA256SUMS does not contain $asset" >&2
@@ -196,7 +218,9 @@ fi
 
 mkdir -p "$bin_dir"
 mkdir -p "$tmp/extract"
+progress_step "Extracting $asset"
 tar -xzf "$tmp/$asset" -C "$tmp/extract"
+progress_step "Installing zvm"
 cp "$tmp/extract/$exe" "$bin_dir/$exe"
 chmod 0755 "$bin_dir/$exe" 2>/dev/null || true
 

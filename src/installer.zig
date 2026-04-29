@@ -66,6 +66,7 @@ pub fn isInstalled(allocator: std.mem.Allocator, version: []const u8) !bool {
 pub fn installArtifact(allocator: std.mem.Allocator, version: []const u8, artifact: registry.Artifact) !void {
     try zpath.ensureLayout(allocator);
 
+    progress("Preparing Zig {s}", .{version});
     const tmp_root = try zpath.tmpDir(allocator);
     defer allocator.free(tmp_root);
     const tmp_dir = try std.fs.path.join(allocator, &.{ tmp_root, version });
@@ -83,12 +84,15 @@ pub fn installArtifact(allocator: std.mem.Allocator, version: []const u8, artifa
     defer std.fs.deleteTreeAbsolute(tmp_dir) catch {};
 
     try std.fs.cwd().makePath(extract_dir);
+    progress("Fetching archive: {s}", .{artifact.url});
     try materializeArchive(allocator, artifact.url, archive_path);
 
+    progress("Verifying checksum", .{});
     const actual = try sha256File(allocator, archive_path);
     defer allocator.free(actual);
     if (!std.mem.eql(u8, actual, artifact.sha256)) return error.ChecksumMismatch;
 
+    progress("Extracting archive", .{});
     if (@import("builtin").os.tag == .windows) {
         const tar_archive_path = try windowsTarPath(allocator, archive_path);
         defer allocator.free(tar_archive_path);
@@ -99,6 +103,7 @@ pub fn installArtifact(allocator: std.mem.Allocator, version: []const u8, artifa
         try run(allocator, &.{ "tar", "-xf", archive_path, "-C", extract_dir });
     }
 
+    progress("Installing Zig {s}", .{version});
     const zig_source = try findZigExecutable(allocator, extract_dir);
     defer allocator.free(zig_source);
 
@@ -226,10 +231,19 @@ fn materializeArchive(allocator: std.mem.Allocator, url: []const u8, output_path
     }
 
     if (std.mem.startsWith(u8, url, "http://") or std.mem.startsWith(u8, url, "https://")) {
-        if (run(allocator, &.{ "curl", "-fsSL", url, "-o", output_path })) |_| {
+        const show_progress = shouldShowProgress(allocator);
+        const curl_args: []const []const u8 = if (show_progress)
+            &.{ "curl", "-fL", "--progress-bar", url, "-o", output_path }
+        else
+            &.{ "curl", "-fsSL", url, "-o", output_path };
+        if (runDownload(allocator, curl_args, show_progress)) |_| {
             return;
         } else |_| {
-            try run(allocator, &.{ "wget", "-q", url, "-O", output_path });
+            const wget_args: []const []const u8 = if (show_progress)
+                &.{ "wget", url, "-O", output_path }
+            else
+                &.{ "wget", "-q", url, "-O", output_path };
+            try runDownload(allocator, wget_args, show_progress);
             return;
         }
     }
@@ -285,6 +299,48 @@ fn findZigExecutable(allocator: std.mem.Allocator, root: []const u8) ![]const u8
     }
 
     return error.ZigExecutableNotFound;
+}
+
+fn progress(comptime fmt: []const u8, args: anytype) void {
+    std.debug.print("==> " ++ fmt ++ "\n", args);
+}
+
+fn shouldShowProgress(allocator: std.mem.Allocator) bool {
+    if (envEquals(allocator, "ZVM_PROGRESS", "1")) return true;
+    if (envEquals(allocator, "ZVM_NO_PROGRESS", "1")) return false;
+    if (envEquals(allocator, "CI", "true")) return false;
+    return true;
+}
+
+fn envEquals(allocator: std.mem.Allocator, name: []const u8, expected: []const u8) bool {
+    const value = std.process.getEnvVarOwned(allocator, name) catch return false;
+    defer allocator.free(value);
+    return std.mem.eql(u8, value, expected);
+}
+
+fn runDownload(allocator: std.mem.Allocator, argv: []const []const u8, inherit_io: bool) !void {
+    if (inherit_io) {
+        return runInherit(allocator, argv);
+    }
+    return run(allocator, argv);
+}
+
+fn runInherit(allocator: std.mem.Allocator, argv: []const []const u8) !void {
+    var child = std.process.Child.init(argv, allocator);
+    child.stdin_behavior = .Ignore;
+    child.stdout_behavior = .Inherit;
+    child.stderr_behavior = .Inherit;
+
+    const term = try child.spawnAndWait();
+    switch (term) {
+        .Exited => |code| if (code == 0) return,
+        else => {},
+    }
+
+    std.debug.print("command failed:", .{});
+    for (argv) |arg| std.debug.print(" {s}", .{arg});
+    std.debug.print("\n", .{});
+    return error.CommandFailed;
 }
 
 fn run(allocator: std.mem.Allocator, argv: []const []const u8) !void {
