@@ -7,11 +7,15 @@ on:
 
 env:
   ZIG_VERSION: 0.15.2
+  RELEASE_NOTES_MODEL: openai/gpt-4o-mini
 
 permissions:
   contents: write
-  issues: read
-  pull-requests: read
+  models: read
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   release:
@@ -68,22 +72,80 @@ jobs:
         shell: bash
         run: ./devtools/release.sh "${{ steps.release.outputs.tag }}"
 
-      - name: Generate Copilot release notes
-        id: copilot_notes
-        uses: github/copilot-release-notes@main
+      - name: Prepare release notes prompt
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          release_tag="${{ steps.release.outputs.tag }}"
+          base_ref="${{ steps.release.outputs.base_ref }}"
+          head_ref="${{ steps.release.outputs.tag }}"
+          context_dir="dist/$release_tag/release-context"
+          mkdir -p "$context_dir"
+
+          git log --no-merges --format='- %s (%h)' "$base_ref..$head_ref" >"$context_dir/commits.md"
+          git diff --name-status "$base_ref..$head_ref" >"$context_dir/files.txt"
+          git diff --stat "$base_ref..$head_ref" >"$context_dir/diff-stat.txt"
+          git diff --unified=20 "$base_ref..$head_ref" >"$context_dir/release.diff" || true
+
+          {
+            printf 'You are writing the changelog section for zvm, the Zig Version Manager.\n'
+            printf 'Write concise, user-facing markdown for this release.\n'
+            printf 'Use these sections exactly: "### Highlights", "### Changes", "### Notes".\n'
+            printf 'The first non-empty line must be "### Highlights".\n'
+            printf 'Do not include install instructions or artifact lists; those are added separately.\n'
+            printf 'Do not wrap the response in a markdown code fence.\n'
+            printf 'Prioritize behavior visible to zvm users, release reliability, installer behavior, registry changes, and validation coverage.\n'
+            printf 'Mention tests only when they explain confidence in a user-visible fix.\n\n'
+            printf 'Release: `%s`\n' "$release_tag"
+            printf 'Source commit: `%s`\n' "$GITHUB_SHA"
+            printf 'Release range: `%s..%s`\n\n' "$base_ref" "$head_ref"
+            printf 'Commit log:\n'
+            cat "$context_dir/commits.md"
+            printf '\nChanged files:\n'
+            cat "$context_dir/files.txt"
+            printf '\nDiff stat:\n'
+            cat "$context_dir/diff-stat.txt"
+            printf '\nDiff, truncated if necessary:\n'
+            python3 -c 'import pathlib, sys; data = pathlib.Path(sys.argv[1]).read_text(errors="replace"); limit = 120000; sys.stdout.write(data if len(data) <= limit else data[:limit] + "\n\n[diff truncated]\n")' "$context_dir/release.diff"
+          } >"$context_dir/changelog.prompt.md"
+
+      - name: Generate release changelog
+        id: release_changelog
+        uses: actions/ai-inference@v1
         with:
-          base-ref: ${{ steps.release.outputs.base_ref }}
-          head-ref: ${{ steps.release.outputs.tag }}
-        env:
-          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+          prompt-file: dist/${{ steps.release.outputs.tag }}/release-context/changelog.prompt.md
+          model: ${{ env.RELEASE_NOTES_MODEL }}
+          max-tokens: 1200
 
       - name: Write release notes
         shell: bash
         env:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
-          COPILOT_RELEASE_NOTES: ${{ steps.copilot_notes.outputs.release-notes }}
+          RELEASE_CHANGELOG_FILE: ${{ steps.release_changelog.outputs.response-file }}
         run: |
+          set -euo pipefail
+
           notes="dist/$RELEASE_TAG/RELEASE_NOTES.md"
+          changelog="dist/$RELEASE_TAG/AI_CHANGELOG.md"
+          python3 - "$RELEASE_CHANGELOG_FILE" "$changelog" <<'PY'
+          import pathlib
+          import re
+          import sys
+
+          source = pathlib.Path(sys.argv[1])
+          target = pathlib.Path(sys.argv[2])
+          notes = source.read_text(errors="replace").strip()
+          notes = re.sub(r"\A```(?:markdown|md)?\s*\n", "", notes, flags=re.IGNORECASE)
+          notes = re.sub(r"\n```\s*\Z", "", notes).strip()
+          target.write_text(notes + "\n")
+          PY
+
+          if [ ! -s "$changelog" ]; then
+            echo "AI release changelog output is empty" >&2
+            exit 1
+          fi
+
           cat > "$notes" <<EOF
           ## Install
 
@@ -122,16 +184,11 @@ jobs:
           - \`zvm-windows-aarch64.tar.gz\`
 
           The bootstrap script verifies checksums automatically.
+
+          ## Changelog
           EOF
 
-          if [ -n "$COPILOT_RELEASE_NOTES" ]; then
-            {
-              echo
-              echo "## Changelog"
-              echo
-              printf '%s\n' "$COPILOT_RELEASE_NOTES"
-            } >> "$notes"
-          fi
+          cat "$changelog" >> "$notes"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
