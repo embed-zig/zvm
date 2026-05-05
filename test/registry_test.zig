@@ -35,6 +35,20 @@ test "registry loads flat version files and resolves patterns" {
     try std.testing.expectEqualStrings("0.17.0-dev.135+9df02121d", dev.version);
 }
 
+test "embedded registry is available when release assets omit registry directory" {
+    const allocator = std.testing.allocator;
+    const reg = try registry.loadEmbedded(allocator);
+    defer reg.deinit();
+
+    try std.testing.expect(reg.entries.len > 0);
+    const official = (try reg.resolve("0.15.2")).?;
+    try std.testing.expectEqualStrings("embedded://registry/0.15.2.zon", official.file_path);
+
+    const url = (try registry.readArtifactUrl(allocator, official, "linux-x86_64")).?;
+    defer allocator.free(url);
+    try std.testing.expect(std.mem.startsWith(u8, url, "https://"));
+}
+
 test "release registry entries include expected host targets" {
     const allocator = std.testing.allocator;
     const reg = try registry.load(allocator, "registry");

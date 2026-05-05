@@ -50,9 +50,7 @@ pub fn main() !void {
 
 fn cmdListRemote(allocator: std.mem.Allocator, args: []const []const u8) !void {
     const pattern = if (args.len > 0) args[0] else "*";
-    const registry_dir = try registry.defaultDir(allocator);
-    defer allocator.free(registry_dir);
-    const reg = try registry.load(allocator, registry_dir);
+    const reg = try registry.loadDefault(allocator);
     defer reg.deinit();
 
     for (reg.entries) |entry| {
@@ -65,9 +63,7 @@ fn cmdListRemote(allocator: std.mem.Allocator, args: []const []const u8) !void {
 fn cmdInstall(allocator: std.mem.Allocator, args: []const []const u8) !void {
     if (args.len != 1) return usage("install <version-or-pattern>");
 
-    const registry_dir = try registry.defaultDir(allocator);
-    defer allocator.free(registry_dir);
-    const reg = try registry.load(allocator, registry_dir);
+    const reg = try registry.loadDefault(allocator);
     defer reg.deinit();
 
     const entry = try reg.resolve(args[0]) orelse {

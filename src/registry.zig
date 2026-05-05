@@ -1,9 +1,11 @@
 const std = @import("std");
 const semver = @import("semver.zig");
+const embedded_registry = @import("embedded_registry").entries;
 
 pub const Entry = struct {
     version: []const u8,
     file_path: []const u8,
+    embedded_contents: ?[]const u8 = null,
 };
 
 pub const Artifact = struct {
@@ -80,11 +82,38 @@ pub fn load(allocator: std.mem.Allocator, registry_dir: []const u8) !Registry {
     };
 }
 
-pub fn defaultDir(allocator: std.mem.Allocator) ![]const u8 {
+pub fn loadEmbedded(allocator: std.mem.Allocator) !Registry {
+    var entries: std.ArrayList(Entry) = .empty;
+    errdefer {
+        for (entries.items) |entry| {
+            allocator.free(entry.version);
+            allocator.free(entry.file_path);
+        }
+        entries.deinit(allocator);
+    }
+
+    for (embedded_registry) |embedded| {
+        _ = try semver.Version.parse(embedded.version);
+        try entries.append(allocator, .{
+            .version = try allocator.dupe(u8, embedded.version),
+            .file_path = try std.fmt.allocPrint(allocator, "embedded://registry/{s}.zon", .{embedded.version}),
+            .embedded_contents = embedded.contents,
+        });
+    }
+
+    std.mem.sort(Entry, entries.items, {}, entryLessThan);
+    return .{
+        .allocator = allocator,
+        .entries = try entries.toOwnedSlice(allocator),
+    };
+}
+
+pub fn loadDefault(allocator: std.mem.Allocator) !Registry {
     if (std.process.getEnvVarOwned(allocator, "ZVM_REGISTRY_DIR")) |value| {
-        return value;
+        defer allocator.free(value);
+        return load(allocator, value);
     } else |err| switch (err) {
-        error.EnvironmentVariableNotFound => return allocator.dupe(u8, "registry"),
+        error.EnvironmentVariableNotFound => return loadEmbedded(allocator),
         else => return err,
     }
 }
@@ -99,8 +128,15 @@ pub fn readArtifactUrl(allocator: std.mem.Allocator, entry: Entry, target: []con
 }
 
 pub fn readArtifact(allocator: std.mem.Allocator, entry: Entry, target: []const u8) !?Artifact {
-    const contents = try std.fs.cwd().readFileAlloc(allocator, entry.file_path, 1024 * 1024);
-    defer allocator.free(contents);
+    var allocated_contents: ?[]u8 = null;
+    const contents = if (entry.embedded_contents) |embedded_contents|
+        embedded_contents
+    else blk: {
+        const loaded = try std.fs.cwd().readFileAlloc(allocator, entry.file_path, 1024 * 1024);
+        allocated_contents = loaded;
+        break :blk loaded;
+    };
+    defer if (allocated_contents) |loaded| allocator.free(loaded);
 
     var index: usize = 0;
     while (std.mem.indexOfPos(u8, contents, index, ".target")) |target_key| {
@@ -135,3 +171,4 @@ fn extractQuotedValue(text: []const u8) ?[]const u8 {
     const second_quote_rel = std.mem.indexOfScalar(u8, text[first_quote + 1 ..], '"') orelse return null;
     return text[first_quote + 1 .. first_quote + 1 + second_quote_rel];
 }
+
