@@ -1,10 +1,19 @@
 #!/bin/sh
 set -eu
 
+script_dir="$(cd "$(dirname "$0")" && pwd -P)"
+repo_root="$(cd "$script_dir/../.." && pwd -P)"
 work="${ZVM_TEST_TMPDIR:-${TMPDIR:-/tmp}/zvm-integration.$$}"
 zvm_home="${ZVM_COMMANDS_HOME:-}"
 registry_dir="$work/registry"
 archive_dir="$work/archives"
+expected_zvm_version="${ZVM_EXPECTED_VERSION:-}"
+if [ -z "$expected_zvm_version" ] && [ -f "$repo_root/build.zig.zon" ]; then
+    expected_zvm_version="$(awk -F\" '/^[[:space:]]*\.version[[:space:]]*=/ { print $2; exit }' "$repo_root/build.zig.zon")"
+fi
+case "$expected_zvm_version" in
+    v*) expected_zvm_version="${expected_zvm_version#v}" ;;
+esac
 
 cleanup() {
     rm -rf "$work"
@@ -218,7 +227,15 @@ assert_zig_on_path() {
     zig_env_from_path
 }
 
-run_zvm --version
+actual_zvm_version="$(run_zvm --version)"
+if [ -n "$expected_zvm_version" ]; then
+    assert_eq "$actual_zvm_version" "zvm $expected_zvm_version" "zvm --version"
+else
+    case "$actual_zvm_version" in
+        "zvm "*) ;;
+        *) echo "zvm --version: expected output to start with 'zvm ', got '$actual_zvm_version'" >&2; exit 1 ;;
+    esac
+fi
 ZVM_REGISTRY_DIR="$registry_dir_arg" "$zvm_cmd" list-remote
 
 run_zvm_with_registry install 0.15.2
