@@ -83,7 +83,7 @@ zvm doctor                 # Check installation health
 └── versions/
     ├── 0.15.2/
     │   └── zig
-    └── 0.15.2-esp.r5/
+    └── 0.15.2-esp.r6/
         └── zig
 ```
 
@@ -104,7 +104,7 @@ zvm supports SemVer-based pattern matching:
 | `0.16.*`       | Latest 0.16.x release       |
 
 
-Official releases use canonical SemVer (`0.15.2`). ESP builds use pre-release identifiers (`0.15.2-esp.r5`).
+Official releases use canonical SemVer (`0.15.2`). ESP builds use pre-release identifiers (`0.15.2-esp.r6`).
 
 ## Agent Skill
 

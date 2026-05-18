@@ -1,0 +1,49 @@
+.{
+    .version = "0.15.2-esp.r6",
+    .channel = "esp",
+    .date = "2026-05-17",
+    .upstream = .{
+        .kind = "github_release",
+        .repo = "embed-zig/esp-zig-bootstrap",
+        .tag = "v0.15.2-r6",
+    },
+    .notes = "ESP Zig bootstrap 0.15.2 r6 release.",
+    .platforms = .{
+        .{
+            .target = "macos-x86_64",
+            .url = "https://github.com/embed-zig/esp-zig-bootstrap/releases/download/v0.15.2-r6/zig-v0.15.2-r6-x86_64-macos-none-baseline.tar.xz",
+            .sha256 = "bfddde78521675c2cab312bd2bd60c06af104adf744222ff29d81057a2c560da",
+            .size = 58508156,
+        },
+        .{
+            .target = "macos-aarch64",
+            .url = "https://github.com/embed-zig/esp-zig-bootstrap/releases/download/v0.15.2-r6/zig-v0.15.2-r6-aarch64-macos-none-baseline.tar.xz",
+            .sha256 = "8042f2faa1283182f9e50ef171a6779d2b83b1d0a64d8ac93465627620c06a63",
+            .size = 52966312,
+        },
+        .{
+            .target = "linux-x86_64",
+            .url = "https://github.com/embed-zig/esp-zig-bootstrap/releases/download/v0.15.2-r6/zig-v0.15.2-r6-x86_64-linux-gnu-baseline.tar.xz",
+            .sha256 = "7ac6a87fc0b4f11b6180eb6e101f6d8e62ef2a1eab30ed8a24253febb3058144",
+            .size = 56275172,
+        },
+        .{
+            .target = "linux-aarch64",
+            .url = "https://github.com/embed-zig/esp-zig-bootstrap/releases/download/v0.15.2-r6/zig-v0.15.2-r6-aarch64-linux-gnu-baseline.tar.xz",
+            .sha256 = "ff129dfc462fad59627b4e7c2ef7a5f9bc4072fe8db957e049040b17f3e4fd16",
+            .size = 51563176,
+        },
+        .{
+            .target = "windows-x86_64",
+            .url = "https://github.com/embed-zig/esp-zig-bootstrap/releases/download/v0.15.2-r6/zig-v0.15.2-r6-x86_64-windows-gnu-baseline.tar.xz",
+            .sha256 = "c17480929ceb825c4edf8e637928d02c10e5b41ad3eb848c4be91ef570c9c2e0",
+            .size = 56969228,
+        },
+        .{
+            .target = "windows-aarch64",
+            .url = "https://github.com/embed-zig/esp-zig-bootstrap/releases/download/v0.15.2-r6/zig-v0.15.2-r6-aarch64-windows-gnu-baseline.tar.xz",
+            .sha256 = "33f8e11e4730a0043d7ecbbed1ce9c122664405c8b810367352bfc8ddd3dff0d",
+            .size = 51399180,
+        },
+    },
+}

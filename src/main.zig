@@ -5,7 +5,7 @@ const registry = @import("registry.zig");
 const self_update = @import("self_update.zig");
 const zpath = @import("path.zig");
 
-const version = "0.2.6";
+const version = "0.2.7";
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};

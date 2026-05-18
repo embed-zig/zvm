@@ -9,8 +9,10 @@ registry/
 ├── 0.15.2.zon
 ├── 0.15.2-esp.r4.zon
 ├── 0.15.2-esp.r5.zon
+├── 0.15.2-esp.r6.zon
 ├── 0.16.0-esp.r1.zon
 ├── 0.16.0-esp.r2.zon
+├── 0.16.0-esp.r3.zon
 ├── 0.16.0.zon
 └── 0.17.0-dev.135+9df02121d.zon
 ```
@@ -21,21 +23,21 @@ registry/
 
 ```zig
 .{
-    .version = "0.15.2-esp.r5",
+    .version = "0.15.2-esp.r6",
     .channel = "esp",           // "official" 或 "esp"
-    .date = "2026-05-14",       // ISO 8601 日期
+    .date = "2026-05-17",       // ISO 8601 日期
     .upstream = .{
         .kind = "github_release",
         .repo = "embed-zig/esp-zig-bootstrap",
-        .tag = "v0.15.2-r5",
+        .tag = "v0.15.2-r6",
     },
-    .notes = "ESP Zig bootstrap 0.15.2 r5",
+    .notes = "ESP Zig bootstrap 0.15.2 r6",
     .platforms = .{
         .{
             .target = "macos-aarch64",
-            .url = "https://github.com/.../zig-v0.15.2-r5-aarch64-macos-none-baseline.tar.xz",
-            .sha256 = "0dacd932090a2a373e1420ef5b06ac9075e3b6796679185e49bc856066398b4d",
-            .size = 53147388,
+            .url = "https://github.com/.../zig-v0.15.2-r6-aarch64-macos-none-baseline.tar.xz",
+            .sha256 = "8042f2faa1283182f9e50ef171a6779d2b83b1d0a64d8ac93465627620c06a63",
+            .size = 52966312,
         },
         // ... 更多平台
     },
@@ -52,8 +54,8 @@ registry/
 
 **ESP 构建版本** 使用预发布标识符：
 
-- `0.15.2-esp.r5`（0.15.2 的 r5 发布版本）
-- `0.16.0-esp.r2`（0.16.0 的 r2 发布版本）
+- `0.15.2-esp.r6`（0.15.2 的 r6 发布版本）
+- `0.16.0-esp.r3`（0.16.0 的 r3 发布版本）
 
 ## 平台目标
 
@@ -83,7 +85,6 @@ zvm 将模式解析为 SemVer 优先级最高的匹配项：
 | 模式             | 匹配项                 | 示例结果                 |
 | -------------- | ------------------- | -------------------- |
 | `0.15.2`       | 精确匹配                | `0.15.2`             |
-| `0.15.2-esp.`* | 0.15.2 的所有 ESP 构建版本 | `0.15.2-esp.r5`（最高）  |
+| `0.15.2-esp.`* | 0.15.2 的所有 ESP 构建版本 | `0.15.2-esp.r6`（最高）  |
 | `0.16.`*       | 所有 0.16.x 发布版本      | `0.16.0`（最高）         |
 | `0.17.*`       | 所有 0.17.x 发布版本      | `0.17.0-dev.135+...` |
-
