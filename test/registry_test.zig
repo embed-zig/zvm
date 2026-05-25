@@ -6,22 +6,24 @@ test "registry loads flat version files and resolves patterns" {
     const reg = try registry.load(allocator, "test/fixtures/registry");
     defer reg.deinit();
 
-    try std.testing.expectEqual(@as(usize, 9), reg.entries.len);
+    try std.testing.expectEqual(@as(usize, 11), reg.entries.len);
     try std.testing.expectEqualStrings("0.15.2-esp.r4", reg.entries[0].version);
     try std.testing.expectEqualStrings("0.15.2-esp.r5", reg.entries[1].version);
     try std.testing.expectEqualStrings("0.15.2-esp.r6", reg.entries[2].version);
-    try std.testing.expectEqualStrings("0.15.2", reg.entries[3].version);
-    try std.testing.expectEqualStrings("0.16.0-esp.r1", reg.entries[4].version);
-    try std.testing.expectEqualStrings("0.16.0-esp.r2", reg.entries[5].version);
-    try std.testing.expectEqualStrings("0.16.0-esp.r3", reg.entries[6].version);
-    try std.testing.expectEqualStrings("0.16.0", reg.entries[7].version);
-    try std.testing.expectEqualStrings("0.17.0-dev.135+9df02121d", reg.entries[8].version);
+    try std.testing.expectEqualStrings("0.15.2-esp.r7", reg.entries[3].version);
+    try std.testing.expectEqualStrings("0.15.2", reg.entries[4].version);
+    try std.testing.expectEqualStrings("0.16.0-esp.r1", reg.entries[5].version);
+    try std.testing.expectEqualStrings("0.16.0-esp.r2", reg.entries[6].version);
+    try std.testing.expectEqualStrings("0.16.0-esp.r3", reg.entries[7].version);
+    try std.testing.expectEqualStrings("0.16.0-esp.r4", reg.entries[8].version);
+    try std.testing.expectEqualStrings("0.16.0", reg.entries[9].version);
+    try std.testing.expectEqualStrings("0.17.0-dev.135+9df02121d", reg.entries[10].version);
 
     const esp = (try reg.resolve("0.15.2-esp.*")).?;
-    try std.testing.expectEqualStrings("0.15.2-esp.r6", esp.version);
+    try std.testing.expectEqualStrings("0.15.2-esp.r7", esp.version);
 
     const esp_prefix = (try reg.resolve("0.15.2-esp")).?;
-    try std.testing.expectEqualStrings("0.15.2-esp.r6", esp_prefix.version);
+    try std.testing.expectEqualStrings("0.15.2-esp.r7", esp_prefix.version);
 
     const official = (try reg.resolve("0.16.*")).?;
     try std.testing.expectEqualStrings("0.16.0", official.version);
@@ -30,10 +32,10 @@ test "registry loads flat version files and resolves patterns" {
     try std.testing.expectEqualStrings("0.16.0", official_prefix.version);
 
     const esp_016 = (try reg.resolve("0.16.0-esp.*")).?;
-    try std.testing.expectEqualStrings("0.16.0-esp.r3", esp_016.version);
+    try std.testing.expectEqualStrings("0.16.0-esp.r4", esp_016.version);
 
     const esp_016_prefix = (try reg.resolve("0.16.0-esp")).?;
-    try std.testing.expectEqualStrings("0.16.0-esp.r3", esp_016_prefix.version);
+    try std.testing.expectEqualStrings("0.16.0-esp.r4", esp_016_prefix.version);
 
     const dev = (try reg.resolve("0.17.*")).?;
     try std.testing.expectEqualStrings("0.17.0-dev.135+9df02121d", dev.version);
