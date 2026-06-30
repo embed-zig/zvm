@@ -11,6 +11,7 @@ registry/
 ├── 0.15.2-esp.r5.zon
 ├── 0.15.2-esp.r6.zon
 ├── 0.15.2-esp.r7.zon
+├── 0.15.2-esp.r8.zon
 ├── 0.16.0-esp.r1.zon
 ├── 0.16.0-esp.r2.zon
 ├── 0.16.0-esp.r3.zon
@@ -25,21 +26,21 @@ Each file is named `<version>.zon`. The version must be valid SemVer.
 
 ```zig
 .{
-    .version = "0.15.2-esp.r7",
+    .version = "0.15.2-esp.r8",
     .channel = "esp",           // "official" or "esp"
-    .date = "2026-05-25",       // ISO 8601 date
+    .date = "2026-06-18",       // ISO 8601 date
     .upstream = .{
         .kind = "github_release",
         .repo = "embed-zig/esp-zig-bootstrap",
-        .tag = "v0.15.2-r7",
+        .tag = "v0.15.2-r8",
     },
-    .notes = "ESP Zig bootstrap 0.15.2 r7",
+    .notes = "ESP Zig bootstrap 0.15.2 r8",
     .platforms = .{
         .{
             .target = "macos-aarch64",
-            .url = "https://github.com/.../zig-v0.15.2-r7-aarch64-macos-none-baseline.tar.xz",
-            .sha256 = "7293c5d6dea87ddf34a00804f9194e8aa7c6fba55672dfb1db6d8a404df30473",
-            .size = 52975280,
+            .url = "https://github.com/.../zig-v0.15.2-r8-aarch64-macos-none-baseline.tar.xz",
+            .sha256 = "068b5798724c68e4d3f49bbc12c37a4d44fbb092bd60a8ae73304a29a48236e8",
+            .size = 53111640,
         },
         // ... more platforms
     },
@@ -56,7 +57,7 @@ Each file is named `<version>.zon`. The version must be valid SemVer.
 
 **ESP builds** use pre-release identifiers:
 
-- `0.15.2-esp.r7` (r7 release for 0.15.2)
+- `0.15.2-esp.r8` (r8 release for 0.15.2)
 - `0.16.0-esp.r4` (r4 release for 0.16.0)
 
 ## Platform Targets
@@ -87,6 +88,6 @@ zvm resolves patterns to the highest SemVer precedence match:
 | Pattern        | Matches                   | Example result            |
 | -------------- | ------------------------- | ------------------------- |
 | `0.15.2`       | Exact                     | `0.15.2`                  |
-| `0.15.2-esp.`* | All ESP builds for 0.15.2 | `0.15.2-esp.r7` (highest) |
+| `0.15.2-esp.`* | All ESP builds for 0.15.2 | `0.15.2-esp.r8` (highest) |
 | `0.16.*`       | All 0.16.x releases       | `0.16.0` (highest)        |
 | `0.17.*`       | All 0.17.x releases       | `0.17.0-dev.135+...`      |
